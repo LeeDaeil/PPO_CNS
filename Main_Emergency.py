@@ -1,14 +1,15 @@
-from Model_Basic.TOOL.Replay import ReplayMemory
 from Model_Basic.AGENT.Utils import hard_update
 from Model_Basic.TOOL.MonitoringBoard import TrainingBoard
 from Model_Basic.TOOL.ShAdam import SharedAdam
 from FolderManger import Folder_Manager
 
+from Model_Emergency.TOOL.Replay import ReplayMemory
 from Model_Emergency.AGENT.SAC_m import SAC as SAC_master
 from Model_Emergency.AGENT.SAC_s import SAC as SAC_slave
 from Model_Emergency.AGENT.Networks import QNetwork, GaussianPolicy, DeterministicPolicy
 
-from Model_Emergency.ENVS.CNS_Env_Basic import ENVCNS
+from Model_Emergency.ENVS.CNS_Env_Em import ENVCNS
+from Model_Emergency.TOOL.PARAMonitoringBoard import ParaBoard
 
 from multiprocessing.managers import BaseManager
 from multiprocessing import Process
@@ -89,7 +90,7 @@ if __name__ == '__main__':
     manager = BaseManager()
     manager.start()
 
-    replay_buffer = manager.ReplayMemory(capacity=1e6)
+    replay_buffer = manager.ReplayMemory(capacity=1e6, nub_env=len(CNS_info))
     print(f'[{"Manger Info":20}][ReplayBuffer|{replay_buffer}]')
     # Build Process ----------------------------------------------------------------------------------------------------
     p_list = []
@@ -112,7 +113,10 @@ if __name__ == '__main__':
 
     p_board = Process(target=TrainingBoard, args=(replay_buffer, ), daemon=True)
     p_list.append(p_board)
-
+    # ------------------------------------------------------------------------------------------------------------------
+    p_board = Process(target=ParaBoard, args=(replay_buffer,), daemon=True)         # ParaBoard
+    p_list.append(p_board)
+    # ------------------------------------------------------------------------------------------------------------------
     [p_.start() for p_ in p_list]
     [p_.join() for p_ in p_list]  # finished at the same time
     # End --------------------------------------------------------------------------------------------------------------
