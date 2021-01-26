@@ -78,7 +78,7 @@ class Board(QWidget):
         self.fig.canvas.draw()
 
         try:
-            if len(acc_reward) > 2 and len(acc_reward) // 100 == 0:
+            if len(acc_reward) > 2 and len(acc_reward) % 100 == 0:
                 self.save_fig(len(acc_reward))
         except Exception as e:
             print(e)

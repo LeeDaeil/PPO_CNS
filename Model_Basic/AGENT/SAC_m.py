@@ -201,14 +201,14 @@ class SAC(SAC_Base):
         old_steps = self.replay_buffer.get_len()
         while True:
             if old_steps != self.replay_buffer.get_len():
-                print(self.p_info + f'[Steps|{self.replay_buffer.get_len():10}]')
                 if self.replay_buffer.get_len() > self.batch_size:
                     for i in range(self.update_per_step):
                         batch_data = self.replay_buffer.sample(batch_size=self.batch_size)
                         critic_1_loss, critic_2_loss, p_loss, ent_loss, alpha = self.agent_update_parameters(batch_data)
 
                         self.replay_buffer.add_train_info(critic_1_loss, critic_2_loss, p_loss, ent_loss, alpha)
-
+                else:
+                    print(self.p_info + f'[Steps|{self.replay_buffer.get_len():10}]')
                 old_steps = self.replay_buffer.get_len()
 
                 # End worker line
