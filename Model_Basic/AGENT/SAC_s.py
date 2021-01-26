@@ -241,6 +241,7 @@ class SAC(SAC_Base):
                 # End episode done line
                 if self.replay_buffer.get_finish_info(): break
 
+            self.replay_buffer.add_ep_end_info(acc_reward=ep_reward)
             # End worker line
             if self.replay_buffer.get_finish_info(): break
         # --------------------------------------------------------------------------------------------------------------
@@ -284,6 +285,7 @@ class SAC(SAC_Base):
 
                 print(self.p_info + f'[W][ep_nub|{ep_nub:10}][ep_steps|{ep_steps:10}][mask|{mask:10}][done|{done:10}]')
 
+            self.replay_buffer.add_ep_end_info(acc_reward=ep_reward)
 
 
 

@@ -261,6 +261,8 @@ class SAC(SAC_Base):
                 # End episode done line
                 if self.replay_buffer.get_finish_info(): break
 
+            self.replay_buffer.add_ep_end_info(acc_reward=ep_reward)
+
             self.replay_buffer.clear_para(f'{self.nub_agent}')
             print('Done--------------------')
 
@@ -317,6 +319,8 @@ class SAC(SAC_Base):
                     next_state, reward, done, AMod = self.env.step(A=action)
                     self.add_para(reward)
                     state = next_state
+
+            self.replay_buffer.add_ep_end_info(acc_reward=ep_reward)
 
             self.replay_buffer.clear_para(f'{self.nub_agent}')
             print('Done--------------------')

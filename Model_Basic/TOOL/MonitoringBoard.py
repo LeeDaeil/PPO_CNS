@@ -50,6 +50,7 @@ class Board(QWidget):
 
     def update_plot(self):
         c1_loss, c2_loss, p_loss, ent_loss, alpha = self.replay_buffer.get_train_info()
+        acc_reward = self.replay_buffer.get_ep_end_info()
 
         self.ax1.clear()
         self.ax2.clear()
@@ -62,8 +63,9 @@ class Board(QWidget):
         self.ax2.plot(p_loss, label='p_loss')
 
         self.ax3.plot(ent_loss, label='ent_loss')
+        self.ax3.plot(alpha, label='alpha')
 
-        self.ax4.plot(ent_loss, label='ent_loss')
+        self.ax4.plot(acc_reward, label='acc_reward')
 
         self.ax1.legend()
         self.ax2.legend()

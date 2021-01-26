@@ -14,6 +14,8 @@ class ReplayMemory:
         self.buffer_ent_loss = []
         self.buffer_alpha = []
 
+        self.buffer_acc_reward = []
+
         self.position = 0
 
         self.total_ep = 0
@@ -66,7 +68,7 @@ class ReplayMemory:
         return self.total_numsteps
 
     def add_train_info(self,
-                       critic_1_loss, critic_2_loss, policy_loss, ent_loss, alpha,
+                       critic_1_loss, critic_2_loss, policy_loss, ent_loss, alpha
                        ):
         """
         loss 값을 loss 저장소에 저장함.
@@ -85,9 +87,18 @@ class ReplayMemory:
 
         if not os.path.isfile('./DB/TRAIN_INFO/info.txt'):
             with open('./DB/TRAIN_INFO/info.txt', 'w') as f:
-                f.write(f"{'critic_1_loss':30},{'critic_2_loss':30},{'policy_loss':30},{'ent_loss':30},{'alpha':30}\n")
+                f.write(f"{'critic_1_loss':30},{'critic_2_loss':30},{'policy_loss':30},"
+                        f"{'ent_loss':30},{'alpha':30}\n")
         with open('./DB/TRAIN_INFO/info.txt', 'a') as f:
             f.write(f"{critic_1_loss:30},{critic_2_loss:30},{policy_loss:30},{ent_loss:30},{alpha:30}\n")
+
+    def add_ep_end_info(self, acc_reward):
+        """
+
+        :param acc_reward:
+        :return:
+        """
+        self.buffer_acc_reward.append(acc_reward)
 
     def get_len(self):
         return len(self.buffer)
@@ -101,6 +112,9 @@ class ReplayMemory:
     def get_train_info(self):
         return self.buffer_critic_1_loss, self.buffer_critic_2_loss,\
                self.buffer_policy_loss, self.buffer_ent_loss, self.buffer_alpha
+
+    def get_ep_end_info(self):
+        return self.buffer_acc_reward
 
     def get_finish_info(self):
         finish = True if self.total_numsteps > self.end_numsteps else False
