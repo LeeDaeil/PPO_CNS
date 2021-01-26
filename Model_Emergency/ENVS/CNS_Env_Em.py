@@ -1,6 +1,7 @@
 from Model_Basic.ENVS.CNS_Basic import CNS
 
 from Model_Emergency.ENVS.PTCurve import PTCureve
+from Model_Emergency.ENVS.CoolingRate import CoolingRATE
 
 import numpy as np
 import time
@@ -15,7 +16,7 @@ class CMem:
         self.CoolingRateFixTemp = 0
         self.CoolingRateFixTime = 0
 
-        self.DRateFun = 0 # lambda t: t
+        self.CoolingRATE = CoolingRATE()
 
         self.StartRL = 0
 
@@ -89,16 +90,12 @@ class CMem:
         # Logic
         if self.CTIME == 0:
             self.CoolingRateSW = 0
-            self.CoolingRateFixTemp = 0
-            self.CoolingRateFixTime = 0
+            self.CoolingRATE.reset_info()
 
             self.StartRL = 0
 
         if self.CoolingRateSW == 1:         # 2.0] Cooling rage 계산 시작
-            rate = - 50 / (60 * 60 * 5)     # 시간당 55도 감소
-            self.CoolingRateFixTemp = copy.deepcopy(self.AVGTemp)   # 변수의 follow up 방지
-            self.CoolingRateFixTime = copy.deepcopy(self.CTIME)     # 변수의 follow up 방지
-            self.DRateFun = lambda t: rate * (t - self.CoolingRateFixTime) + self.CoolingRateFixTemp
+            self.CoolingRATE.save_info(self.AVGTemp, self.CTIME)
             self.CoolingRateSW += 1     # 값 2로 바뀜으로써 이 로직은 1번만 동작함.
 
 
@@ -204,7 +201,7 @@ class ENVCNS(CNS):
         # --------------------------------------------------------------------------------------------------------------
         # r_1] Cooling Rate 에 따라 온도 감소
         if self.CMem.CoolingRateSW == 2:    # Line 99 참조
-            current_DRTemp = self.CMem.DRateFun(self.CMem.CTIME)
+            current_DRTemp = self.CMem.CoolingRATE.get_temp(self.CMem.CTIME)
             r_1 = - abs(current_DRTemp - self.CMem.AVGTemp)
         # r_2] 가압기 수위 20~76% 구간 초가시 패널티
         if True:
@@ -286,14 +283,21 @@ class ENVCNS(CNS):
         """
         AMod = A
         ActOrderBook = {
+            'StopAllRCP': (['KSWO132', 'KSWO133', 'KSWO134'], [0, 0, 0]),
             'StopRCP1': (['KSWO132'], [0]),
             'StopRCP2': (['KSWO133'], [0]),
             'StopRCP3': (['KSWO134'], [0]),
-
             'NetBRKOpen': (['KSWO244'], [0]),
             'OilSysOff': (['KSWO190'], [0]),
             'TurningGearOff': (['KSWO191'], [0]),
             'CutBHV311': (['BHV311', 'FKAFWPI'], [0, 0]),
+
+            'PZRSprayMan': (['KSWO128'], [1]), 'PZRSprayAuto': (['KSWO128'], [0]),
+
+            'PZRSprayClose': (['BPRZSP'], [self.mem['BPRZSP']['Val'] + 0.015 * -1]),
+            'PZRSprayOpen': (['BPRZSP'], [self.mem['BPRZSP']['Val'] + 0.015 * 1]),
+
+            'PZRBackHeaterOff': (['KSWO125'], [0]), 'PZRBackHeaterOn': (['KSWO125'], [1]),
 
             'SteamDumpMan': (['KSWO176'], [1]), 'SteamDumpAuto': (['KSWO176'], [0]),
 
@@ -345,38 +349,38 @@ class ENVCNS(CNS):
             # 1.1] 원자로 Trip 이후 자동 제어 액션
             # 1.1.1] RCP 97 압력 이하에서 자동 정지
             if self.CMem.RCP1 == 1 and self.CMem.PZRPres < 97 and self.CMem.CTIME < 15 * 60 * 5:
-                a_log_f(s=f'압력[{self.CMem.PZRPres}] < 97 로 RCP 1 펌프 자동 정지')
+                a_log_f(s=f'Pres [{self.CMem.PZRPres}] < 97 RCP 1 stop')
                 self._send_control_save(ActOrderBook['StopRCP1'])
             if self.CMem.RCP2 == 1 and self.CMem.PZRPres < 97 and self.CMem.CTIME < 15 * 60 * 5:
-                a_log_f(s=f'압력[{self.CMem.PZRPres}] < 97 로 RCP 2 펌프 자동 정지')
+                a_log_f(s=f'Pres [{self.CMem.PZRPres}] < 97 RCP 2 stop')
                 self._send_control_save(ActOrderBook['StopRCP2'])
             if self.CMem.RCP3 == 1 and self.CMem.PZRPres < 97 and self.CMem.CTIME < 15 * 60 * 5:
-                a_log_f(s=f'압력[{self.CMem.PZRPres}] < 97 로 RCP 3 펌프 자동 정지')
+                a_log_f(s=f'Pres [{self.CMem.PZRPres}] < 97 RCP 3 stop')
                 self._send_control_save(ActOrderBook['StopRCP3'])
             # 1.1.2] 원자로 트립 후 Netbrk, turning gear, oil sys, BHV311 정지 및 패쇄
             if self.CMem.NetBRK == 1:
-                a_log_f(s=f'NetBRK [{self.CMem.NetBRK}] 정지')
+                a_log_f(s=f'NetBRK [{self.CMem.NetBRK}] Off')
                 self._send_control_save(ActOrderBook['NetBRKOpen'])
             if self.CMem.TurningGear == 1:
-                a_log_f(s=f'TurningGear [{self.CMem.TurningGear}] 정지')
+                a_log_f(s=f'TurningGear [{self.CMem.TurningGear}] Off')
                 self._send_control_save(ActOrderBook['TurningGearOff'])
             if self.CMem.OilSys == 1:
-                a_log_f(s=f'OilSys [{self.CMem.OilSys}] 정지')
+                a_log_f(s=f'OilSys [{self.CMem.OilSys}] Off')
                 self._send_control_save(ActOrderBook['OilSysOff'])
             if self.CMem.BHV311 > 0:
-                a_log_f(s=f'BHV311 [{self.CMem.BHV311}] 개패로 정지')
+                a_log_f(s=f'BHV311 [{self.CMem.BHV311}] Cut')
                 self._send_control_save(ActOrderBook['CutBHV311'])
             # 1.2] 스팀 덤프벨브 현재 최대 압력을 기준으로 해당 부분까지 벨브 Set-up
-            a_log_f(s=f'[Check][{self.CMem.SIS}][{self.CMem.MSI}][주요 로직 1 확인]')
+            a_log_f(s=f'[Check][{self.CMem.SIS}][{self.CMem.MSI}][Check Main logic 1]')
             if self.CMem.SIS != 0 and self.CMem.MSI != 0:
                 if max(self.CMem.SG1Pres, self.CMem.SG2Pres, self.CMem.SG3Pres) < self.CMem.SteamDumpPos:
-                    a_log_f(s=f'StemDumpPos [{self.CMem.SteamDumpPos}] 변경')
+                    a_log_f(s=f'StemDumpPos [{self.CMem.SteamDumpPos}] change')
                     self._send_control_save(ActOrderBook['IFLOGIC_SteamDumpDown'])
             # 1.2] SI reset 전에 Aux 평균화 [검증 완료 20200903]
                 if self.CMem.SG1Feed == self.CMem.SG2Feed and self.CMem.SG1Feed == self.CMem.SG3Feed and \
                         self.CMem.SG2Feed == self.CMem.SG1Feed and self.CMem.SG2Feed == self.CMem.SG3Feed and \
                         self.CMem.SG3Feed == self.CMem.SG1Feed and self.CMem.SG3Feed == self.CMem.SG2Feed:
-                    a_log_f(s=f'[{self.CMem.SG1Feed:10}, {self.CMem.SG2Feed:10}, {self.CMem.SG3Feed:10}] 급수 평균화 완료')
+                    a_log_f(s=f'[{self.CMem.SG1Feed:10}, {self.CMem.SG2Feed:10}, {self.CMem.SG3Feed:10}] Feed water avg done')
                 else:
                     # 1.2.1] 급수 일정화 수행
                     # 1.2.1.1] 가장 큰 급수 찾기
@@ -385,7 +389,7 @@ class ENVCNS(CNS):
                     MinSGFeed = SGFeedList.index(min(SGFeedList))  # 0, 1, 2
                     self._send_control_save(ActOrderBook[f'DecreaseAux{MaxSGFeed + 1}Flow'])
                     self._send_control_save(ActOrderBook[f'IncreaseAux{MinSGFeed + 1}Flow'])
-                    a_log_f(s=f'[{self.CMem.SG1Feed:10}, {self.CMem.SG2Feed:10}, {self.CMem.SG3Feed:10}] 급수 평균화 수행')
+                    a_log_f(s=f'[{self.CMem.SG1Feed:10}, {self.CMem.SG2Feed:10}, {self.CMem.SG3Feed:10}] Feed water avg')
             # 1.3] 3000부터 SI reset
             if self.CMem.CTIME == 3000:
                 self._send_control_save(ActOrderBook['ResetSI'])

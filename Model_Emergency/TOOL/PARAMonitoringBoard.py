@@ -2,9 +2,12 @@ import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 
 import sys
+import numpy as np
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QTimer
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+
+from Model_Emergency.ENVS.PTCurve import PTCureve
 
 # ======================================================================================================================
 # Training Board
@@ -69,12 +72,21 @@ class BoardUI(QWidget):
         # Left button
         self.button_area_wid_lay = QVBoxLayout()
         self.button_area_wid_lay.setContentsMargins(0, 0, 0, 0)
+
+        self.line_ed = QLineEdit('FigName')
+        self.button_area_wid_lay.addWidget(self.line_ed)
+
+        b = QPushButton(f'SaveFIG')
+        b.clicked.connect(self.click_save_fig)
+        self.button_area_wid_lay.addWidget(b)
+
         for i in range(self.nub_agent):
             b = QPushButton(f'{i}')
             b.clicked.connect(self.click_button)
             self.button_area_wid_lay.addWidget(b)
 
         self.button_area_wid = QWidget()
+        self.button_area_wid.setFixedWidth(150)
         self.button_area_wid.setLayout(self.button_area_wid_lay)
 
         button_width = self.button_area_wid.width() + 5
@@ -100,6 +112,12 @@ class BoardUI(QWidget):
     def click_button(self):
         self.selected_nub = self.sender().text()
 
+    def click_save_fig(self):
+        if self.line_ed.text() != '':
+            self.fig.savefig(f'../../DB/TRAIN_INFO/{self.line_ed.text()}.svg', format='svg', dpi=1200)
+        else:
+            self.fig.savefig('../../DB/TRAIN_INFO/SaveFIg.svg', format='svg', dpi=1200)
+
     def resizeEvent(self, e):
         button_width = self.button_area_wid.width() + 5
         self.scroll_area_wid.setFixedWidth(self.width() - 20 - button_width)
@@ -118,37 +136,86 @@ class Board(BoardUI):
         timer.start()
 
     def update_plot(self):
-        KCNTOMS, UAVLEG2, ZINST65, WFWLN123 = self.replay_buffer.get_para(f'{self.selected_nub}')
+        KCNTOMS, UAVLEG2, ZINST65, WFWLN12, CoolingRateSW, Reward = self.replay_buffer.get_para(f'{self.selected_nub}')
         _ = [ax.clear() for ax in self.axs]
 
         if len(KCNTOMS) > 1:
+            self.axs[0].plot(Reward)  # Reward
+            self.axs[0].grid()
+
+            self.axs[1].plot(WFWLN12)  # Reward
+            self.axs[1].grid()
+
             # 인디 케이터
+
+            inv_KCNTOMS = [- val for val in KCNTOMS]
+
+            Temp = []
+            UpPres = []
+            BotPres = []
+            for _ in range(0, 350):
+                uppres, botpres = PTCureve()._get_pres(_)
+                Temp.append([_])
+                UpPres.append([uppres])
+                BotPres.append([botpres])
+
+            PTX = np.array(Temp)
+            BotZ = np.array(BotPres)
+            UpZ = np.array(UpPres)
+            PTY = np.array([[0] for _ in range(0, 350)])
+
+            PTX = np.hstack([PTX[:, 0:1], Temp])
+            BotZ = np.hstack([BotZ[:, 0:1], BotPres])
+            UpZ = np.hstack([UpZ[:, 0:1], UpPres])
+            PTY = np.hstack([PTY[:, 0:1], np.array([[inv_KCNTOMS[-1]] for _ in range(0, 350)])])
+
+            zero = [0 for _ in range(len(UAVLEG2))]
+
+            self.axs[4].plot3D(CoolingRateSW, inv_KCNTOMS, zero, color='orange', lw=1.5, ls='--')
+
             self.axs[4].plot3D([170, 0, 0, 170, 170],
-                               [KCNTOMS[-1], KCNTOMS[-1], 0, 0, KCNTOMS[-1]],
+                               [inv_KCNTOMS[-1], inv_KCNTOMS[-1], 0, 0, inv_KCNTOMS[-1]],
                                [29.5, 29.5, 29.5, 29.5, 29.5], color='black', lw=0.5, ls='--')
             self.axs[4].plot3D([170, 0, 0, 170, 170],
-                               [KCNTOMS[-1], KCNTOMS[-1], 0, 0, KCNTOMS[-1]],
+                               [inv_KCNTOMS[-1], inv_KCNTOMS[-1], 0, 0, inv_KCNTOMS[-1]],
                                [17, 17, 17, 17, 17], color='black', lw=0.5, ls='--')
-            self.axs[4].plot3D([170, 170], [KCNTOMS[-1], KCNTOMS[-1]],
+            self.axs[4].plot3D([170, 170], [inv_KCNTOMS[-1], inv_KCNTOMS[-1]],
                                [17, 29.5], color='black', lw=0.5, ls='--')
             self.axs[4].plot3D([170, 170], [0, 0], [17, 29.5], color='black', lw=0.5, ls='--')
-            self.axs[4].plot3D([0, 0], [KCNTOMS[-1], KCNTOMS[-1]], [17, 29.5], color='black', lw=0.5, ls='--')
+            self.axs[4].plot3D([0, 0], [inv_KCNTOMS[-1], inv_KCNTOMS[-1]], [17, 29.5], color='black', lw=0.5, ls='--')
             self.axs[4].plot3D([0, 0], [0, 0], [17, 29.5], color='black', lw=0.5, ls='--')
-            #
 
+            self.axs[4].plot_surface(PTX, PTY, UpZ, rstride=8, cstride=8, alpha=0.15, color='r')
+            self.axs[4].plot_surface(PTX, PTY, BotZ, rstride=8, cstride=8, alpha=0.15, color='r')
+
+            #
             # 3D plot
-            self.axs[4].plot3D(UAVLEG2, KCNTOMS, ZINST65, color='blue', lw=1.5)
+            self.axs[4].plot3D(UAVLEG2, inv_KCNTOMS, ZINST65, color='blue', lw=1.5)
 
             # linewidth or lw: float
             self.axs[4].plot3D([UAVLEG2[-1], UAVLEG2[-1]],
-                               [KCNTOMS[-1], KCNTOMS[-1]],
+                               [inv_KCNTOMS[-1], inv_KCNTOMS[-1]],
                                [0, ZINST65[-1]], color='blue', lw=0.5, ls='--')
             self.axs[4].plot3D([0, UAVLEG2[-1]],
-                               [KCNTOMS[-1], KCNTOMS[-1]],
+                               [inv_KCNTOMS[-1], inv_KCNTOMS[-1]],
                                [ZINST65[-1], ZINST65[-1]], color='blue', lw=0.5, ls='--')
             self.axs[4].plot3D([UAVLEG2[-1], UAVLEG2[-1]],
-                               [0, KCNTOMS[-1]],
+                               [0, inv_KCNTOMS[-1]],
                                [ZINST65[-1], ZINST65[-1]], color='blue', lw=0.5, ls='--')
+            # each
+            self.axs[4].plot3D(UAVLEG2, inv_KCNTOMS, zero, color='black', lw=1, ls='--')  # temp
+            self.axs[4].plot3D(zero, inv_KCNTOMS, ZINST65, color='black', lw=1, ls='--')  # pres
+            self.axs[4].plot3D(UAVLEG2, zero, ZINST65, color='black', lw=1, ls='--')  # PT
+
+            # 절대값 처리
+            self.axs[4].set_yticklabels([int(_) for _ in abs(self.axs[4].get_yticks())])
+
+            self.axs[4].set_xlabel('Temperature')
+            self.axs[4].set_ylabel('Time [Tick]')
+            self.axs[4].set_zlabel('Pressure')
+
+            self.axs[4].set_xlim(0, 350)
+            self.axs[4].set_zlim(0, 200)
 
         # _ = [ax.legend() for ax in self.axs]
         self.fig.set_tight_layout(True)

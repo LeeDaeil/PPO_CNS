@@ -18,7 +18,7 @@ class SAC_Base:
 
         self.automatic_entropy_tuning = automatic_entropy_tuning
         # self.batch_size = 256
-        self.batch_size = 30
+        self.batch_size = 64
         self.nub_steps = 1e6
         self.update_per_step = 1            # Every step net update
         self.update_target_per_step = 1     #

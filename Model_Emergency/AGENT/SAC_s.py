@@ -197,12 +197,14 @@ class SAC(SAC_Base):
         if critic_path is not None:
             self.critic.load_state_dict(T.load(critic_path))
 
-    def add_para(self):
+    def add_para(self, r):
         self.replay_buffer.add_para(env_i=f'{self.nub_agent}',
                                     ctime=self.env.CMem.CTIME,
                                     avgtemp=self.env.CMem.AVGTemp,
                                     pzrpres=self.env.CMem.PZRPres,
-                                    allfeed=self.env.CMem.SG1Feed + self.env.CMem.SG2Feed + self.env.CMem.SG3Feed)
+                                    allfeed=self.env.CMem.SG1Feed + self.env.CMem.SG2Feed + self.env.CMem.SG3Feed,
+                                    CoolingRateSW=self.env.CMem.CoolingRATE.get_temp(self.env.CMem.CTIME),
+                                    Reward=r)
 
     def run(self):
         time.sleep(int(self.nub_agent * 5))
@@ -233,6 +235,7 @@ class SAC(SAC_Base):
                             # self.replay_buffer.add_train_info(critic_1_loss, critic_2_loss, p_loss, ent_loss, alpha)
 
                     next_state, reward, done, AMod = self.env.step(A=action)
+                    self.add_para(reward)
 
                     # --------------------------------------------------------------------------------------------------
                     ep_steps += 1
@@ -240,30 +243,27 @@ class SAC(SAC_Base):
                     self.replay_buffer.add_total_numsteps()
 
                     # 종료 조건 섹션 -------------------------------------------------------------------------------------
-                    done = True if self.env.CMem.CTIME > 350000 else False
                     mask = 1 if self.env.CMem.CTIME > 350000 else float(not done)
                     # --------------------------------------------------------------------------------------------------
                     self.replay_buffer.push(state, action, reward, next_state, mask)
-                    self.add_para()
-
                     state = next_state
 
-
-                    print(self.p_info + f'[W][ep_nub|{ep_nub:10}][ep_steps|{ep_steps:10}]'
-                                        f'[mask|{mask:10}][done|{done:10}]')
+                    # print(self.p_info + f'[W][ep_nub|{ep_nub:10}][ep_steps|{ep_steps:10}]'
+                    #                     f'[mask|{mask:10}][done|{done:10}]')
                 else:
                     # 자동 액션들 수행.
                     # action 이 계산이 되어도 env 에서 액션이 들어가지 않음.
                     action = self.agent_select_action(state)
                     next_state, reward, done, AMod = self.env.step(A=action)
-
-                    self.add_para()
+                    self.add_para(reward)
                     state = next_state
 
                 # End episode done line
                 if self.replay_buffer.get_finish_info(): break
 
-            self.replay_buffer.clear_para()
+            self.replay_buffer.clear_para(f'{self.nub_agent}')
+            print('Done--------------------')
+
             # End worker line
             if self.replay_buffer.get_finish_info(): break
         # --------------------------------------------------------------------------------------------------------------
@@ -295,6 +295,7 @@ class SAC(SAC_Base):
                             # self.replay_buffer.add_train_info(critic_1_loss, critic_2_loss, p_loss, ent_loss, alpha)
 
                     next_state, reward, done, AMod = self.env.step(A=action)
+                    self.add_para(reward)
 
                     # --------------------------------------------------------------------------------------------------
                     ep_steps += 1
@@ -302,27 +303,20 @@ class SAC(SAC_Base):
                     self.replay_buffer.add_total_numsteps()
 
                     # 종료 조건 섹션 -------------------------------------------------------------------------------------
-                    done = True if self.env.CMem.CTIME > 350000 else False
                     mask = 1 if self.env.CMem.CTIME > 350000 else float(not done)
                     # --------------------------------------------------------------------------------------------------
                     # self.replay_buffer.push(state, action, reward, next_state, mask)
                     state = next_state
 
-                    print(self.p_info + f'[W][ep_nub|{ep_nub:10}][ep_steps|{ep_steps:10}]'
-                                        f'[mask|{mask:10}][done|{done:10}]')
+                    # print(self.p_info + f'[W][ep_nub|{ep_nub:10}][ep_steps|{ep_steps:10}]'
+                    #                     f'[mask|{mask:10}][done|{done:10}]')
                 else:
                     # 자동 액션들 수행.
                     # action 이 계산이 되어도 env 에서 액션이 들어가지 않음.
                     action = self.agent_select_action(state)
                     next_state, reward, done, AMod = self.env.step(A=action)
+                    self.add_para(reward)
                     state = next_state
 
-
-
-
-
-
-
-
-
-
+            self.replay_buffer.clear_para(f'{self.nub_agent}')
+            print('Done--------------------')
