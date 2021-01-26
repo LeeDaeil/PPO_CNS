@@ -22,7 +22,7 @@ class ReplayMemory:
 
         self.total_numsteps = 0
 
-        self.end_numsteps = 100
+        self.end_numsteps = 1e7
 
         print(f'[{"Replay Memory Info":20}][Capacity|{self.capacity}][End_Stes|{self.end_numsteps}]')
 

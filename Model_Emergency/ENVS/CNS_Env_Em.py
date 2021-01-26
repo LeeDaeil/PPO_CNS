@@ -231,7 +231,7 @@ class ENVCNS(CNS):
             Avg_pres = (self.CMem.SG1Pres + self.CMem.SG2Pres + self.CMem.SG3Pres) / 3
             r_5 += 9 - Avg_pres if Avg_pres > 9 else 0
 
-        r_w = [1 * r_1, 1 * r_2, 1 * r_3, 1 * r_4, 1 * r_5]
+        r_w = [1 * r_1, 1 * r_2, 0 * r_3, 0 * r_4, 0 * r_5]
         r = sum(r_w)
         # --------------------------------------------------------------------------------------------------------------
         self.Loger_txt += f'R|{r}|{r_1}|{r_2}|{r_3}|{r_4}|{r_5}|{r_w}|'

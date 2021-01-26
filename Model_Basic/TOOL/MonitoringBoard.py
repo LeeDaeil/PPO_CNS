@@ -21,7 +21,9 @@ class TrainingBoard:
 class Board(QWidget):
     def __init__(self, replay_buffer):
         super().__init__()
+
         self.replay_buffer = replay_buffer
+        self.abs_path = 'C:/Users/Com/Desktop/DL_Code/Soft_Actor_Critic_Agent_CNS/DB/'
 
         self.initUI()
 
@@ -74,6 +76,15 @@ class Board(QWidget):
 
         self.fig.set_tight_layout(True)
         self.fig.canvas.draw()
+
+        try:
+            if len(acc_reward) > 2 and len(acc_reward) // 100 == 0:
+                self.save_fig(len(acc_reward))
+        except Exception as e:
+            print(e)
+
+    def save_fig(self, ep):
+        self.fig.savefig(f'{self.abs_path}/TRAIN_INFO/{ep}.svg', format='svg', dpi=1200)
 
 # ======================================================================================================================
 

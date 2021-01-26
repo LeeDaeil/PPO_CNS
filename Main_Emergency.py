@@ -19,8 +19,23 @@ if __name__ == '__main__':
 
     # CNS_info ---------------------------------------------------------------------------------------------------------
     CNS_info = {
-        0: {'CNSIP': '192.168.0.101', 'COMIP': '192.168.0.29', 'PORT': 7101, 'PID': False},
-        1: {'CNSIP': '192.168.0.101', 'COMIP': '192.168.0.29', 'PORT': 7102, 'PID': False},
+        0: {'CNSIP': '192.168.0.211', 'COMIP': '192.168.0.200', 'PORT': 7101, 'PID': False},
+        1: {'CNSIP': '192.168.0.211', 'COMIP': '192.168.0.200', 'PORT': 7102, 'PID': False},
+        2: {'CNSIP': '192.168.0.211', 'COMIP': '192.168.0.200', 'PORT': 7103, 'PID': False},
+        3: {'CNSIP': '192.168.0.211', 'COMIP': '192.168.0.200', 'PORT': 7104, 'PID': False},
+        4: {'CNSIP': '192.168.0.211', 'COMIP': '192.168.0.200', 'PORT': 7105, 'PID': False},
+
+        5: {'CNSIP': '192.168.0.212', 'COMIP': '192.168.0.200', 'PORT': 7201, 'PID': False},
+        6: {'CNSIP': '192.168.0.212', 'COMIP': '192.168.0.200', 'PORT': 7202, 'PID': False},
+        7: {'CNSIP': '192.168.0.212', 'COMIP': '192.168.0.200', 'PORT': 7203, 'PID': False},
+        8: {'CNSIP': '192.168.0.212', 'COMIP': '192.168.0.200', 'PORT': 7204, 'PID': False},
+        9: {'CNSIP': '192.168.0.212', 'COMIP': '192.168.0.200', 'PORT': 7205, 'PID': False},
+
+        10: {'CNSIP': '192.168.0.213', 'COMIP': '192.168.0.200', 'PORT': 7301, 'PID': False},
+        11: {'CNSIP': '192.168.0.213', 'COMIP': '192.168.0.200', 'PORT': 7302, 'PID': False},
+        12: {'CNSIP': '192.168.0.213', 'COMIP': '192.168.0.200', 'PORT': 7303, 'PID': False},
+        13: {'CNSIP': '192.168.0.213', 'COMIP': '192.168.0.200', 'PORT': 7304, 'PID': False},
+        14: {'CNSIP': '192.168.0.213', 'COMIP': '192.168.0.200', 'PORT': 7305, 'PID': False},
     }
 
     CNS_Envs = [
@@ -114,7 +129,7 @@ if __name__ == '__main__':
     p_board = Process(target=TrainingBoard, args=(replay_buffer, ), daemon=True)
     p_list.append(p_board)
     # ------------------------------------------------------------------------------------------------------------------
-    p_board = Process(target=ParaBoard, args=(replay_buffer,), daemon=True)         # ParaBoard
+    p_board = Process(target=ParaBoard, args=(replay_buffer, len(CNS_info), ), daemon=True)         # ParaBoard
     p_list.append(p_board)
     # ------------------------------------------------------------------------------------------------------------------
     [p_.start() for p_ in p_list]

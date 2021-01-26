@@ -7,9 +7,6 @@ from Model_Basic.TOOL import Replay
 class ReplayMemory(Replay.ReplayMemory):
     def __init__(self, capacity, nub_env):
         super(ReplayMemory, self).__init__(capacity=capacity)
-
-        self.end_numsteps = 1e6
-
         self.nub_env = nub_env
         self.gp_db = {
             f'{i}': {

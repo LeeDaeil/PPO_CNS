@@ -14,9 +14,9 @@ from Model_Emergency.ENVS.PTCurve import PTCureve
 
 
 class ParaBoard:
-    def __init__(self, replay_buffer):
+    def __init__(self, replay_buffer, nub_agent):
         app = QApplication(sys.argv)
-        window = Board(replay_buffer)
+        window = Board(replay_buffer, nub_agent)
         window.show()
         app.exec_()
 
@@ -27,6 +27,8 @@ class BoardUI(QWidget):
         self.nub_agent = nub_agent
         self.nub_gp = nub_gp
         self.selected_nub = 0
+
+        self.abs_path = 'C:/Users/Com/Desktop/DL_Code/Soft_Actor_Critic_Agent_CNS/DB/'
 
         self.initUI()
 
@@ -114,9 +116,9 @@ class BoardUI(QWidget):
 
     def click_save_fig(self):
         if self.line_ed.text() != '':
-            self.fig.savefig(f'../../DB/TRAIN_INFO/{self.line_ed.text()}.svg', format='svg', dpi=1200)
+            self.fig.savefig(f'{self.abs_path}/TRAIN_INFO/{self.line_ed.text()}.svg', format='svg', dpi=1200)
         else:
-            self.fig.savefig('../../DB/TRAIN_INFO/SaveFIg.svg', format='svg', dpi=1200)
+            self.fig.savefig(f'{self.abs_path}/TRAIN_INFO/SaveFIg.svg', format='svg', dpi=1200)
 
     def resizeEvent(self, e):
         button_width = self.button_area_wid.width() + 5
@@ -124,8 +126,8 @@ class BoardUI(QWidget):
 
 
 class Board(BoardUI):
-    def __init__(self, replay_buffer):
-        super(Board, self).__init__(nub_agent=2)
+    def __init__(self, replay_buffer, nub_agent):
+        super(Board, self).__init__(nub_agent=nub_agent)
 
         self.replay_buffer = replay_buffer
 
