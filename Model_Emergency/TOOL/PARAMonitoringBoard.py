@@ -138,93 +138,90 @@ class Board(BoardUI):
         timer.start()
 
     def update_plot(self):
-        try:
-            KCNTOMS, UAVLEG2, ZINST65, WFWLN12, CoolingRateSW, Reward = self.replay_buffer.get_para(f'{self.selected_nub}')
-            _ = [ax.clear() for ax in self.axs]
+        KCNTOMS, UAVLEG2, ZINST65, WFWLN12, CoolingRateSW, Reward = self.replay_buffer.get_para(f'{self.selected_nub}')
+        _ = [ax.clear() for ax in self.axs]
 
-            if len(KCNTOMS) > 1:
-                self.axs[0].plot(Reward)  # Reward
-                self.axs[0].grid()
+        if len(KCNTOMS) > 1:
+            self.axs[0].plot(Reward)  # Reward
+            self.axs[0].grid()
 
-                self.axs[1].plot(WFWLN12)  # Reward
-                self.axs[1].grid()
+            self.axs[1].plot(WFWLN12)  # Reward
+            self.axs[1].grid()
 
-                # 인디 케이터
+            # 인디 케이터
 
-                inv_KCNTOMS = [- val for val in KCNTOMS]
+            inv_KCNTOMS = [- val for val in KCNTOMS]
 
-                Temp = []
-                UpPres = []
-                BotPres = []
-                for _ in range(0, 350):
-                    uppres, botpres = PTCureve()._get_pres(_)
-                    Temp.append([_])
-                    UpPres.append([uppres])
-                    BotPres.append([botpres])
+            Temp = []
+            UpPres = []
+            BotPres = []
+            for _ in range(0, 350):
+                uppres, botpres = PTCureve()._get_pres(_)
+                Temp.append([_])
+                UpPres.append([uppres])
+                BotPres.append([botpres])
 
-                PTX = np.array(Temp)
-                BotZ = np.array(BotPres)
-                UpZ = np.array(UpPres)
-                PTY = np.array([[0] for _ in range(0, 350)])
+            PTX = np.array(Temp)
+            BotZ = np.array(BotPres)
+            UpZ = np.array(UpPres)
+            PTY = np.array([[0] for _ in range(0, 350)])
 
-                PTX = np.hstack([PTX[:, 0:1], Temp])
-                BotZ = np.hstack([BotZ[:, 0:1], BotPres])
-                UpZ = np.hstack([UpZ[:, 0:1], UpPres])
-                PTY = np.hstack([PTY[:, 0:1], np.array([[inv_KCNTOMS[-1]] for _ in range(0, 350)])])
+            PTX = np.hstack([PTX[:, 0:1], Temp])
+            BotZ = np.hstack([BotZ[:, 0:1], BotPres])
+            UpZ = np.hstack([UpZ[:, 0:1], UpPres])
+            PTY = np.hstack([PTY[:, 0:1], np.array([[inv_KCNTOMS[-1]] for _ in range(0, 350)])])
 
-                zero = [0 for _ in range(len(UAVLEG2))]
+            zero = [0 for _ in range(len(UAVLEG2))]
 
-                self.axs[4].plot3D(CoolingRateSW, inv_KCNTOMS, zero, color='orange', lw=1.5, ls='--')
+            self.axs[4].plot3D(CoolingRateSW, inv_KCNTOMS, zero, color='orange', lw=1.5, ls='--')
 
-                self.axs[4].plot3D([170, 0, 0, 170, 170],
-                                   [inv_KCNTOMS[-1], inv_KCNTOMS[-1], 0, 0, inv_KCNTOMS[-1]],
-                                   [29.5, 29.5, 29.5, 29.5, 29.5], color='black', lw=0.5, ls='--')
-                self.axs[4].plot3D([170, 0, 0, 170, 170],
-                                   [inv_KCNTOMS[-1], inv_KCNTOMS[-1], 0, 0, inv_KCNTOMS[-1]],
-                                   [17, 17, 17, 17, 17], color='black', lw=0.5, ls='--')
-                self.axs[4].plot3D([170, 170], [inv_KCNTOMS[-1], inv_KCNTOMS[-1]],
-                                   [17, 29.5], color='black', lw=0.5, ls='--')
-                self.axs[4].plot3D([170, 170], [0, 0], [17, 29.5], color='black', lw=0.5, ls='--')
-                self.axs[4].plot3D([0, 0], [inv_KCNTOMS[-1], inv_KCNTOMS[-1]], [17, 29.5], color='black', lw=0.5, ls='--')
-                self.axs[4].plot3D([0, 0], [0, 0], [17, 29.5], color='black', lw=0.5, ls='--')
+            self.axs[4].plot3D([170, 0, 0, 170, 170],
+                               [inv_KCNTOMS[-1], inv_KCNTOMS[-1], 0, 0, inv_KCNTOMS[-1]],
+                               [29.5, 29.5, 29.5, 29.5, 29.5], color='black', lw=0.5, ls='--')
+            self.axs[4].plot3D([170, 0, 0, 170, 170],
+                               [inv_KCNTOMS[-1], inv_KCNTOMS[-1], 0, 0, inv_KCNTOMS[-1]],
+                               [17, 17, 17, 17, 17], color='black', lw=0.5, ls='--')
+            self.axs[4].plot3D([170, 170], [inv_KCNTOMS[-1], inv_KCNTOMS[-1]],
+                               [17, 29.5], color='black', lw=0.5, ls='--')
+            self.axs[4].plot3D([170, 170], [0, 0], [17, 29.5], color='black', lw=0.5, ls='--')
+            self.axs[4].plot3D([0, 0], [inv_KCNTOMS[-1], inv_KCNTOMS[-1]], [17, 29.5], color='black', lw=0.5, ls='--')
+            self.axs[4].plot3D([0, 0], [0, 0], [17, 29.5], color='black', lw=0.5, ls='--')
 
-                self.axs[4].plot_surface(PTX, PTY, UpZ, rstride=8, cstride=8, alpha=0.15, color='r')
-                self.axs[4].plot_surface(PTX, PTY, BotZ, rstride=8, cstride=8, alpha=0.15, color='r')
+            self.axs[4].plot_surface(PTX, PTY, UpZ, rstride=8, cstride=8, alpha=0.15, color='r')
+            self.axs[4].plot_surface(PTX, PTY, BotZ, rstride=8, cstride=8, alpha=0.15, color='r')
 
-                #
-                # 3D plot
-                self.axs[4].plot3D(UAVLEG2, inv_KCNTOMS, ZINST65, color='blue', lw=1.5)
+            #
+            # 3D plot
+            self.axs[4].plot3D(UAVLEG2, inv_KCNTOMS, ZINST65, color='blue', lw=1.5)
 
-                # linewidth or lw: float
-                self.axs[4].plot3D([UAVLEG2[-1], UAVLEG2[-1]],
-                                   [inv_KCNTOMS[-1], inv_KCNTOMS[-1]],
-                                   [0, ZINST65[-1]], color='blue', lw=0.5, ls='--')
-                self.axs[4].plot3D([0, UAVLEG2[-1]],
-                                   [inv_KCNTOMS[-1], inv_KCNTOMS[-1]],
-                                   [ZINST65[-1], ZINST65[-1]], color='blue', lw=0.5, ls='--')
-                self.axs[4].plot3D([UAVLEG2[-1], UAVLEG2[-1]],
-                                   [0, inv_KCNTOMS[-1]],
-                                   [ZINST65[-1], ZINST65[-1]], color='blue', lw=0.5, ls='--')
-                # each
-                self.axs[4].plot3D(UAVLEG2, inv_KCNTOMS, zero, color='black', lw=1, ls='--')  # temp
-                self.axs[4].plot3D(zero, inv_KCNTOMS, ZINST65, color='black', lw=1, ls='--')  # pres
-                self.axs[4].plot3D(UAVLEG2, zero, ZINST65, color='black', lw=1, ls='--')  # PT
+            # linewidth or lw: float
+            self.axs[4].plot3D([UAVLEG2[-1], UAVLEG2[-1]],
+                               [inv_KCNTOMS[-1], inv_KCNTOMS[-1]],
+                               [0, ZINST65[-1]], color='blue', lw=0.5, ls='--')
+            self.axs[4].plot3D([0, UAVLEG2[-1]],
+                               [inv_KCNTOMS[-1], inv_KCNTOMS[-1]],
+                               [ZINST65[-1], ZINST65[-1]], color='blue', lw=0.5, ls='--')
+            self.axs[4].plot3D([UAVLEG2[-1], UAVLEG2[-1]],
+                               [0, inv_KCNTOMS[-1]],
+                               [ZINST65[-1], ZINST65[-1]], color='blue', lw=0.5, ls='--')
+            # each
+            self.axs[4].plot3D(UAVLEG2, inv_KCNTOMS, zero, color='black', lw=1, ls='--')  # temp
+            self.axs[4].plot3D(zero, inv_KCNTOMS, ZINST65, color='black', lw=1, ls='--')  # pres
+            self.axs[4].plot3D(UAVLEG2, zero, ZINST65, color='black', lw=1, ls='--')  # PT
 
-                # 절대값 처리
-                self.axs[4].set_yticklabels([int(_) for _ in abs(self.axs[4].get_yticks())])
+            # 절대값 처리
+            self.axs[4].set_yticklabels([int(_) for _ in abs(self.axs[4].get_yticks())])
 
-                self.axs[4].set_xlabel('Temperature')
-                self.axs[4].set_ylabel('Time [Tick]')
-                self.axs[4].set_zlabel('Pressure')
+            self.axs[4].set_xlabel('Temperature')
+            self.axs[4].set_ylabel('Time [Tick]')
+            self.axs[4].set_zlabel('Pressure')
 
-                self.axs[4].set_xlim(0, 350)
-                self.axs[4].set_zlim(0, 200)
+            self.axs[4].set_xlim(0, 350)
+            self.axs[4].set_zlim(0, 200)
 
-            # _ = [ax.legend() for ax in self.axs]
-            self.fig.set_tight_layout(True)
-            self.fig.canvas.draw()
-        except Exception as e:
-            print(e)
+        # _ = [ax.legend() for ax in self.axs]
+        self.fig.set_tight_layout(True)
+        self.fig.canvas.draw()
 
 # ======================================================================================================================
 if __name__ == '__main__':
