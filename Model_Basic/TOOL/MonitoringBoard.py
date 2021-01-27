@@ -51,37 +51,40 @@ class Board(QWidget):
         self.layout = layout
 
     def update_plot(self):
-        c1_loss, c2_loss, p_loss, ent_loss, alpha = self.replay_buffer.get_train_info()
-        acc_reward = self.replay_buffer.get_ep_end_info()
-
-        self.ax1.clear()
-        self.ax2.clear()
-        self.ax3.clear()
-        self.ax4.clear()
-
-        self.ax1.plot(c1_loss, label='C1_loss')
-        self.ax1.plot(c2_loss, label='C2_loss')
-
-        self.ax2.plot(p_loss, label='p_loss')
-
-        self.ax3.plot(ent_loss, label='ent_loss')
-        self.ax3.plot(alpha, label='alpha')
-
-        self.ax4.plot(acc_reward, label='acc_reward')
-
-        self.ax1.legend()
-        self.ax2.legend()
-        self.ax3.legend()
-        self.ax4.legend()
-
-        self.fig.set_tight_layout(True)
-        self.fig.canvas.draw()
-
         try:
-            if len(acc_reward) > 2 and len(acc_reward) % 100 == 0:
-                self.save_fig(len(acc_reward))
-        except Exception as e:
-            print(e)
+            c1_loss, c2_loss, p_loss, ent_loss, alpha = self.replay_buffer.get_train_info()
+            acc_reward = self.replay_buffer.get_ep_end_info()
+
+            self.ax1.clear()
+            self.ax2.clear()
+            self.ax3.clear()
+            self.ax4.clear()
+
+            self.ax1.plot(c1_loss, label='C1_loss')
+            self.ax1.plot(c2_loss, label='C2_loss')
+
+            self.ax2.plot(p_loss, label='p_loss')
+
+            self.ax3.plot(ent_loss, label='ent_loss')
+            self.ax3.plot(alpha, label='alpha')
+
+            self.ax4.plot(acc_reward, label='acc_reward')
+
+            self.ax1.legend()
+            self.ax2.legend()
+            self.ax3.legend()
+            self.ax4.legend()
+
+            self.fig.set_tight_layout(True)
+            self.fig.canvas.draw()
+
+            try:
+                if len(acc_reward) > 2 and len(acc_reward) % 100 == 0:
+                    self.save_fig(len(acc_reward))
+            except Exception as e:
+                print(e)
+        except Exception as e2:
+            print(e2)
 
     def save_fig(self, ep):
         self.fig.savefig(f'{self.abs_path}/TRAIN_INFO/{ep}.svg', format='svg', dpi=1200)
