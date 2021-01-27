@@ -1,5 +1,4 @@
-from Model_Basic.ENVS.CNS_Basic import CNS
-from Model_Basic.TOOL.PID_Na import PID
+from Model_0_Basic.ENVS.CNS_Basic import CNS
 import numpy as np
 import time
 import random
@@ -85,7 +84,7 @@ class ENVCNS(CNS):
         self.Loger_txt += f'R|{r}|'
         return r
 
-    def get_done(self, r):
+    def get_done(self, r, AMod):
         d = False
 
         cond = {
@@ -148,7 +147,7 @@ class ENVCNS(CNS):
         self.ENVStep += 1
 
         reward = self.get_reward(AMod)                                      # [r(t+1)]
-        done, reward = self.get_done(reward)                                # [d(t+1)]
+        done, reward = self.get_done(reward, AMod)                          # [d(t+1)]
         next_state, next_state_list = self.get_state()                      # [s(t+1)]
         self.Loger_txt += f'NS|{next_state_list}|'                          #
         # ----------------------------------------------------------

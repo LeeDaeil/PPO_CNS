@@ -1,6 +1,7 @@
-from Model_Basic.AGENT.SAC_init import SAC_Base
-from Model_Basic.AGENT.Networks import GaussianPolicy, QNetwork, DeterministicPolicy
-from Model_Basic.AGENT.Utils import hard_update, soft_update, ensure_shared_grads
+from Model_0_Basic.AGENT.SAC_init import SAC_Base
+from Model_0_Basic.AGENT.Utils import hard_update, soft_update, ensure_shared_grads
+
+from Model_2_Start_up_PZR.AGENT.Networks import GaussianPolicy, QNetwork, DeterministicPolicy
 
 import os
 import torch as T
@@ -199,11 +200,14 @@ class SAC(SAC_Base):
 
     def add_para(self, r):
         self.replay_buffer.add_para(env_i=f'{self.nub_agent}',
-                                    ctime=self.env.CMem.CTIME,
-                                    avgtemp=self.env.CMem.AVGTemp,
-                                    pzrpres=self.env.CMem.PZRPres,
-                                    allfeed=self.env.CMem.SG1Feed + self.env.CMem.SG2Feed + self.env.CMem.SG3Feed,
-                                    CoolingRateSW=self.env.CMem.CoolingRATE.get_temp(self.env.CMem.CTIME),
+                                    KCNTOMS=self.env.CMem.CTIME,
+                                    UUPPPL=self.env.CMem.ExitCoreT,
+                                    UPRZ=self.env.CMem.PZRTemp,
+                                    ZINST65=self.env.CMem.PZRPres,
+                                    ZINST63=self.env.CMem.PZRLevl,
+                                    BHV142=self.env.CMem.HV142,
+                                    BFV122=self.env.CMem.FV122,
+                                    ZINST66=self.env.CMem.PZRSprayPos,
                                     Reward=r)
 
     def run(self):

@@ -1,7 +1,7 @@
 import random
 import numpy as np
 import os
-from Model_Basic.TOOL import Replay
+from Model_0_Basic.TOOL import Replay
 
 
 class ReplayMemory(Replay.ReplayMemory):
@@ -11,17 +11,14 @@ class ReplayMemory(Replay.ReplayMemory):
         self.gp_db = {
             f'{i}': {
                 'KCNTOMS': [],
-                'UAVLEG2': [],
-                'ZINST65': [],
 
-                'WFWLN123': [],
-
-                'CoolingRateSW': [],
+                'UUPPPL': [],   'UPRZ': [],
+                'ZINST65': [],  'ZINST63': [],
+                'BHV142': [],   'BFV122': [],   'ZINST66': [],
 
                 'Reward': [],
             } for i in range(self.nub_env)
         }
-
 
     def push(self, state, action, reward, next_state, done):
         super(ReplayMemory, self).push(state, action, reward, next_state, done)
@@ -55,26 +52,45 @@ class ReplayMemory(Replay.ReplayMemory):
 
     # ------------------------------------------------------------------------------------------------------------------
     # 추가된 기능
-    def add_para(self, env_i, ctime, avgtemp, pzrpres, allfeed, CoolingRateSW, Reward):
-        self.gp_db[env_i]['KCNTOMS'].append(ctime)
-        self.gp_db[env_i]['UAVLEG2'].append(avgtemp)
-        self.gp_db[env_i]['ZINST65'].append(pzrpres)
-        self.gp_db[env_i]['WFWLN123'].append(allfeed)
-        self.gp_db[env_i]['CoolingRateSW'].append(CoolingRateSW)
+    def add_para(self, env_i, KCNTOMS, UUPPPL, UPRZ, ZINST65, ZINST63, BHV142, BFV122, ZINST66, Reward):
+        self.gp_db[env_i]['KCNTOMS'].append(KCNTOMS)
+
+        self.gp_db[env_i]['UUPPPL'].append(UUPPPL)
+        self.gp_db[env_i]['UPRZ'].append(UPRZ)
+
+        self.gp_db[env_i]['ZINST65'].append(ZINST65)
+        self.gp_db[env_i]['ZINST63'].append(ZINST63)
+
+        self.gp_db[env_i]['BHV142'].append(BHV142)
+        self.gp_db[env_i]['BFV122'].append(BFV122)
+        self.gp_db[env_i]['ZINST66'].append(ZINST66)
+
         self.gp_db[env_i]['Reward'].append(Reward)
 
     def get_para(self, env_i):
         KCNTOMS = self.gp_db[env_i]['KCNTOMS']
-        UAVLEG2 = self.gp_db[env_i]['UAVLEG2']
+
+        UUPPPL = self.gp_db[env_i]['UUPPPL']
+        UPRZ = self.gp_db[env_i]['UPRZ']
+
         ZINST65 = self.gp_db[env_i]['ZINST65']
-        WFWLN123 = self.gp_db[env_i]['WFWLN123']
-        CoolingRateSW = self.gp_db[env_i]['CoolingRateSW']
+        ZINST63 = self.gp_db[env_i]['ZINST63']
+
+        BHV142 = self.gp_db[env_i]['BHV142']
+        BFV122 = self.gp_db[env_i]['BFV122']
+        ZINST66 = self.gp_db[env_i]['ZINST66']
 
         Reward = self.gp_db[env_i]['Reward']
 
-        return KCNTOMS, UAVLEG2, ZINST65, WFWLN123, CoolingRateSW, Reward
+        return KCNTOMS, UUPPPL, UPRZ, ZINST65, ZINST63, BHV142, BFV122, ZINST66, Reward
 
     def clear_para(self, env_i):
-        self.gp_db[env_i] = {'KCNTOMS': [], 'UAVLEG2': [], 'ZINST65': [],
-                             'WFWLN123': [], 'CoolingRateSW': [], 'Reward': []
-                             }
+        self.gp_db[env_i] = {
+                'KCNTOMS': [],
+
+                'UUPPPL': [],   'UPRZ': [],
+                'ZINST65': [],  'ZINST63': [],
+                'BHV142': [],   'BFV122': [],   'ZINST66': [],
+
+                'Reward': [],
+            }

@@ -6,12 +6,13 @@ from FolderManger import Folder_Manager
 from multiprocessing.managers import BaseManager
 from multiprocessing import Process
 
-from Model_0_Basic.TOOL.Replay import ReplayMemory
-from Model_0_Basic.AGENT.SAC_m import SAC as SAC_master
-from Model_0_Basic.AGENT.SAC_s import SAC as SAC_slave
-from Model_0_Basic.AGENT.Networks import QNetwork, GaussianPolicy, DeterministicPolicy
+from Model_2_Start_up_PZR.TOOL.Replay import ReplayMemory
+from Model_2_Start_up_PZR.AGENT.SAC_m import SAC as SAC_master
+from Model_2_Start_up_PZR.AGENT.SAC_s import SAC as SAC_slave
+from Model_2_Start_up_PZR.AGENT.Networks import QNetwork, GaussianPolicy, DeterministicPolicy
 
-from Model_0_Basic.ENVS.CNS_Env_Basic import ENVCNS
+from Model_2_Start_up_PZR.ENVS.CNS_Env_Start_up_PZR import ENVCNS
+from Model_2_Start_up_PZR.TOOL.PARAMonitoringBoard import ParaBoard
 
 
 if __name__ == '__main__':
@@ -87,7 +88,7 @@ if __name__ == '__main__':
     manager = BaseManager()
     manager.start()
 
-    replay_buffer = manager.ReplayMemory(capacity=1e6)
+    replay_buffer = manager.ReplayMemory(capacity=1e6, nub_env=len(CNS_info))
     print(f'[{"Manger Info":20}][ReplayBuffer|{replay_buffer}]')
     # Build Process ----------------------------------------------------------------------------------------------------
     p_list = []
@@ -110,7 +111,10 @@ if __name__ == '__main__':
 
     p_board = Process(target=TrainingBoard, args=(replay_buffer, ), daemon=True)
     p_list.append(p_board)
-
+    # ------------------------------------------------------------------------------------------------------------------
+    p_board = Process(target=ParaBoard, args=(replay_buffer, len(CNS_info), ), daemon=True)         # ParaBoard
+    p_list.append(p_board)
+    # ------------------------------------------------------------------------------------------------------------------
     [p_.start() for p_ in p_list]
     [p_.join() for p_ in p_list]  # finished at the same time
     # End --------------------------------------------------------------------------------------------------------------
