@@ -10,6 +10,8 @@ import copy
 class CMem:
     def __init__(self, mem):
         self.m = mem  # Line CNSmem -> getmem
+
+        self.StartRL = 1
         self.update()
 
     def update(self):
@@ -35,6 +37,8 @@ class CMem:
         self.PZRPropo = self.m['QPRZH']['Val']
 
         # Logic
+        if self.CTIME == 0:
+            self.StartRL = 1
 
 
 class ENVCNS(CNS):
@@ -182,7 +186,6 @@ class ENVCNS(CNS):
             4: True if self.CMem.CTIME > 550 * 50 and self.CMem.PZRLevl > 98 else False,
             5: True if 28 <= self.CMem.PZRLevl <= 32 else False,
             6: True if 28 <= self.CMem.PZRPres <= 32 else False,
-            7: True if self.CMem.PZRLevl >= 99 else False,
         }
         d = False
         # --------------------------------------------------------------------------------------------------------------
@@ -197,20 +200,12 @@ class ENVCNS(CNS):
                 d = True
         else:
             # 에피소드 진행중 ..
-            if cond[7]:
-                # 가압기 내 기포가 생성되지 않은 상태임.
-                if -0.3 <= AMod[1] < 0.3:
-                    pass
-                else:
-                    d = True
+            if cond[2] or cond[3] or cond[4]:
+                # 이중 하나라도 걸리면 에피소드 종료
+                d = True
             else:
-                # 가압기 내 기포가 생성되었으며, 이제 2번째 액션이 허가됨.
-                if cond[2] or cond[3] or cond[4]:
-                    # 이중 하나라도 걸리면 에피소드 종료
-                    d = True
-                else:
-                    # 계속 진행 ...
-                    pass
+                # 계속 진행 ...
+                pass
         # --------------------------------------------------------------------------------------------------------------
         if d: print(cond)
         # --------------------------------------------------------------------------------------------------------------
@@ -475,7 +470,7 @@ class ENVCNS(CNS):
         AMod = self.send_act(A)                                             # [a(t)]
         self.Loger_txt += f'A|{A}|AMod|{AMod}'                              #
 
-        self.want_tick = int(50)
+        self.want_tick = int(100)
 
         # New Data (time t+1) -------------------------------------
         super(ENVCNS, self).step()                  # 전체 CNS mem run-Freeze 하고 mem 업데이트

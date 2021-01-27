@@ -12,6 +12,8 @@ def get_cns_info():
         return {
             0: {'CNSIP': '192.168.0.101', 'COMIP': '192.168.0.29', 'PORT': 7101, 'PID': False},
             1: {'CNSIP': '192.168.0.101', 'COMIP': '192.168.0.29', 'PORT': 7102, 'PID': False},
+            2: {'CNSIP': '192.168.0.101', 'COMIP': '192.168.0.29', 'PORT': 7103, 'PID': False},
+            3: {'CNSIP': '192.168.0.101', 'COMIP': '192.168.0.29', 'PORT': 7104, 'PID': False},
         }
     else:
         return {

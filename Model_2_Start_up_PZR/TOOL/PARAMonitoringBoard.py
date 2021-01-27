@@ -51,7 +51,7 @@ class BoardUI(QWidget):
         #             count_gp_nub += 1
 
         self.fig = plt.Figure()
-        required_row = 3
+        required_row = 4
         required_col = 2
         gs = GridSpec(required_row, required_col, figure=self.fig)
 
@@ -154,9 +154,9 @@ class Board(BoardUI):
                 self.axs[3].plot(KCNTOMS, BFV122, label='Charging Pos')
                 self.axs[3].plot(KCNTOMS, [_/31 for _ in ZINST66], label='PZR Spray Pos')
 
-            for ax in self.axs:
-                ax.legend()
-                ax.grid()
+                for ax in self.axs:
+                    ax.legend()
+                    ax.grid()
 
             self.fig.set_tight_layout(True)
             self.fig.canvas.draw()
