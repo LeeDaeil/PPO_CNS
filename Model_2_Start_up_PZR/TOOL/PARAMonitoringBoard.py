@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QTimer
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
-from Model_Emergency.ENVS.PTCurve import PTCureve
+from Model_1_Emergency.ENVS.PTCurve import PTCureve
 
 # ======================================================================================================================
 # Training Board
@@ -51,16 +51,15 @@ class BoardUI(QWidget):
         #             count_gp_nub += 1
 
         self.fig = plt.Figure()
-        required_row = 5
+        required_row = 4
         required_col = 2
         gs = GridSpec(required_row, required_col, figure=self.fig)
 
         self.axs = [
-            self.fig.add_subplot(gs[0, 0]),  # 에이전트 누적 Reward
-            self.fig.add_subplot(gs[0, 1]),  # 현재 보상
-            self.fig.add_subplot(gs[1, 0]),  # 현재 수위
-            self.fig.add_subplot(gs[1, 1]),  # 현재 급수량
-            self.fig.add_subplot(gs[2:5, :], projection='3d'),
+            self.fig.add_subplot(gs[0, :]),  # 에이전트 누적 Reward
+            self.fig.add_subplot(gs[1, :]),  # 현재 CoreExitTemp / PzrTemp
+            self.fig.add_subplot(gs[2, :]),  # 현재 PZR Pres / level
+            self.fig.add_subplot(gs[3, :]),  # 현재 Letdown pos/ charging pos/ Pzr spray pos
         ]
 
         self.fig.set_tight_layout(True)
@@ -138,90 +137,31 @@ class Board(BoardUI):
         timer.start()
 
     def update_plot(self):
-        KCNTOMS, UAVLEG2, ZINST65, WFWLN12, CoolingRateSW, Reward = self.replay_buffer.get_para(f'{self.selected_nub}')
-        _ = [ax.clear() for ax in self.axs]
+        try:
+            KCNTOMS, UUPPPL, UPRZ, ZINST65, ZINST63, BHV142, BFV122, ZINST66, Reward = self.replay_buffer.get_para(f'{self.selected_nub}')
+            _ = [ax.clear() for ax in self.axs]
 
-        if len(KCNTOMS) > 1:
-            self.axs[0].plot(Reward)  # Reward
-            self.axs[0].grid()
+            if len(KCNTOMS) > 1:
+                self.axs[0].plot(Reward, label='R')  # Reward
 
-            self.axs[1].plot(WFWLN12)  # Reward
-            self.axs[1].grid()
+                self.axs[1].plot(KCNTOMS, UUPPPL, label='CoreExitTemp')
+                self.axs[1].plot(KCNTOMS, UPRZ, label='PzrTemp')
 
-            # 인디 케이터
+                self.axs[2].plot(KCNTOMS, ZINST65, label='PZR Pres')
+                self.axs[2].plot(KCNTOMS, ZINST63, label='PZR Level')
 
-            inv_KCNTOMS = [- val for val in KCNTOMS]
+                self.axs[3].plot(KCNTOMS, BHV142, label='Letdown Pos')
+                self.axs[3].plot(KCNTOMS, BFV122, label='Charging Pos')
+                self.axs[3].plot(KCNTOMS, [_/31 for _ in ZINST66], label='PZR Spray Pos')
 
-            Temp = []
-            UpPres = []
-            BotPres = []
-            for _ in range(0, 350):
-                uppres, botpres = PTCureve()._get_pres(_)
-                Temp.append([_])
-                UpPres.append([uppres])
-                BotPres.append([botpres])
+                for ax in self.axs:
+                    ax.legend()
+                    ax.grid()
 
-            PTX = np.array(Temp)
-            BotZ = np.array(BotPres)
-            UpZ = np.array(UpPres)
-            PTY = np.array([[0] for _ in range(0, 350)])
-
-            PTX = np.hstack([PTX[:, 0:1], Temp])
-            BotZ = np.hstack([BotZ[:, 0:1], BotPres])
-            UpZ = np.hstack([UpZ[:, 0:1], UpPres])
-            PTY = np.hstack([PTY[:, 0:1], np.array([[inv_KCNTOMS[-1]] for _ in range(0, 350)])])
-
-            zero = [0 for _ in range(len(UAVLEG2))]
-
-            self.axs[4].plot3D(CoolingRateSW, inv_KCNTOMS, zero, color='orange', lw=1.5, ls='--')
-
-            self.axs[4].plot3D([170, 0, 0, 170, 170],
-                               [inv_KCNTOMS[-1], inv_KCNTOMS[-1], 0, 0, inv_KCNTOMS[-1]],
-                               [29.5, 29.5, 29.5, 29.5, 29.5], color='black', lw=0.5, ls='--')
-            self.axs[4].plot3D([170, 0, 0, 170, 170],
-                               [inv_KCNTOMS[-1], inv_KCNTOMS[-1], 0, 0, inv_KCNTOMS[-1]],
-                               [17, 17, 17, 17, 17], color='black', lw=0.5, ls='--')
-            self.axs[4].plot3D([170, 170], [inv_KCNTOMS[-1], inv_KCNTOMS[-1]],
-                               [17, 29.5], color='black', lw=0.5, ls='--')
-            self.axs[4].plot3D([170, 170], [0, 0], [17, 29.5], color='black', lw=0.5, ls='--')
-            self.axs[4].plot3D([0, 0], [inv_KCNTOMS[-1], inv_KCNTOMS[-1]], [17, 29.5], color='black', lw=0.5, ls='--')
-            self.axs[4].plot3D([0, 0], [0, 0], [17, 29.5], color='black', lw=0.5, ls='--')
-
-            self.axs[4].plot_surface(PTX, PTY, UpZ, rstride=8, cstride=8, alpha=0.15, color='r')
-            self.axs[4].plot_surface(PTX, PTY, BotZ, rstride=8, cstride=8, alpha=0.15, color='r')
-
-            #
-            # 3D plot
-            self.axs[4].plot3D(UAVLEG2, inv_KCNTOMS, ZINST65, color='blue', lw=1.5)
-
-            # linewidth or lw: float
-            self.axs[4].plot3D([UAVLEG2[-1], UAVLEG2[-1]],
-                               [inv_KCNTOMS[-1], inv_KCNTOMS[-1]],
-                               [0, ZINST65[-1]], color='blue', lw=0.5, ls='--')
-            self.axs[4].plot3D([0, UAVLEG2[-1]],
-                               [inv_KCNTOMS[-1], inv_KCNTOMS[-1]],
-                               [ZINST65[-1], ZINST65[-1]], color='blue', lw=0.5, ls='--')
-            self.axs[4].plot3D([UAVLEG2[-1], UAVLEG2[-1]],
-                               [0, inv_KCNTOMS[-1]],
-                               [ZINST65[-1], ZINST65[-1]], color='blue', lw=0.5, ls='--')
-            # each
-            self.axs[4].plot3D(UAVLEG2, inv_KCNTOMS, zero, color='black', lw=1, ls='--')  # temp
-            self.axs[4].plot3D(zero, inv_KCNTOMS, ZINST65, color='black', lw=1, ls='--')  # pres
-            self.axs[4].plot3D(UAVLEG2, zero, ZINST65, color='black', lw=1, ls='--')  # PT
-
-            # 절대값 처리
-            self.axs[4].set_yticklabels([int(_) for _ in abs(self.axs[4].get_yticks())])
-
-            self.axs[4].set_xlabel('Temperature')
-            self.axs[4].set_ylabel('Time [Tick]')
-            self.axs[4].set_zlabel('Pressure')
-
-            self.axs[4].set_xlim(0, 350)
-            self.axs[4].set_zlim(0, 200)
-
-        # _ = [ax.legend() for ax in self.axs]
-        self.fig.set_tight_layout(True)
-        self.fig.canvas.draw()
+            self.fig.set_tight_layout(True)
+            self.fig.canvas.draw()
+        except Exception as e:
+            print(e)
 
 # ======================================================================================================================
 if __name__ == '__main__':

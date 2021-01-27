@@ -1,6 +1,7 @@
-from Model_Basic.AGENT.SAC_init import SAC_Base
-from Model_Basic.AGENT.Networks import GaussianPolicy, QNetwork, DeterministicPolicy
-from Model_Basic.AGENT.Utils import hard_update, soft_update, ensure_shared_grads
+from Model_0_Basic.AGENT.Utils import hard_update, soft_update, ensure_shared_grads
+
+from Model_1_Emergency.AGENT.SAC_init import SAC_Base
+from Model_1_Emergency.AGENT.Networks import GaussianPolicy, QNetwork, DeterministicPolicy
 
 import os
 import torch as T
@@ -23,8 +24,8 @@ class SAC(SAC_Base):
                                   observation_space=env.observation_space, replay_buffer=replay_buffer,
                                   lr=lr, policy_type=policy_type, automatic_entropy_tuning=automatic_entropy_tuning)
         self.nub_agent = nub_agent
-        self.p_info = f'[{"SAC " + f"{nub_agent}":20}][InCode]'
-        print(self.p_info + f'[Env_id|{self.env}][ReplayBuffer|{self.replay_buffer}]')
+        self.p_info = f'[{"SAC Master":20}][InCode]'
+        print(self.p_info + f'[ReplayBuffer|{self.replay_buffer}]')
         # ==============================================================================================================
         #
         # Agent --------------------------------------------------------------------------------------------------------
@@ -105,45 +106,47 @@ class SAC(SAC_Base):
             _, _, action = self.policy.sample(state)
         return action.detach().cpu().numpy()[0]     # [ ], numpy[0.80986434 0.7939146 ] <class 'numpy.ndarray'>
 
-    def agent_update_parameters(self, batch_data):
+    def agent_update_parameters(self, batch_data, notrain=False):
         # Sample a batch from memory
-        # state_batch, action_batch, reward_batch, next_state_batch, mask_batch = batch_data
-        #
-        # state_batch = T.FloatTensor(state_batch)
-        # next_state_batch = T.FloatTensor(next_state_batch)
-        # action_batch = T.FloatTensor(action_batch)
-        # reward_batch = T.FloatTensor(reward_batch).unsqueeze(1)
-        # mask_batch = T.FloatTensor(mask_batch).unsqueeze(1)
-        #
-        # with T.no_grad():
-        #     next_state_action, next_state_log_pi, _ = self.policy.sample(next_state_batch)
-        #     qf1_next_target, qf2_next_target = self.critic_target(next_state_batch, next_state_action)
-        #     min_qf_next_target = T.min(qf1_next_target, qf2_next_target) - self.alpha * next_state_log_pi
-        #     next_q_value = reward_batch + mask_batch * self.gamma * (min_qf_next_target)
-        #
-        # qf1, qf2 = self.critic(state_batch, action_batch)  # Two Q-functions to mitigate positive bias in the policy improvement step
-        # qf1_loss = F.mse_loss(qf1, next_q_value)  # JQ = 𝔼(st,at)~D[0.5(Q1(st,at) - r(st,at) - γ(𝔼st+1~p[V(st+1)]))^2]
-        # qf2_loss = F.mse_loss(qf2, next_q_value)  # JQ = 𝔼(st,at)~D[0.5(Q1(st,at) - r(st,at) - γ(𝔼st+1~p[V(st+1)]))^2]
-        # qf_loss = qf1_loss + qf2_loss
-        #
-        # self.critic_optim.zero_grad()
-        # qf_loss.backward()
-        # if not self.sh_net == None:
-        #     ensure_shared_grads(self.critic, self.sh_net['critic'])
-        # self.critic_optim.step()
-        #
-        # pi, log_pi, _ = self.policy.sample(state_batch)
-        #
-        # qf1_pi, qf2_pi = self.critic(state_batch, pi)
-        # min_qf_pi = T.min(qf1_pi, qf2_pi)
-        #
-        # policy_loss = ((self.alpha * log_pi) - min_qf_pi).mean() # Jπ = 𝔼st∼D,εt∼N[α * logπ(f(εt;st)|st) − Q(st,f(εt;st))]
-        #
-        # self.policy_optim.zero_grad()
-        # policy_loss.backward()
-        # if not self.sh_net == None:
-        #     ensure_shared_grads(self.policy, self.sh_net['policy'])
-        # self.policy_optim.step()
+        state_batch, action_batch, reward_batch, next_state_batch, mask_batch = batch_data
+
+        state_batch = T.FloatTensor(state_batch)
+        next_state_batch = T.FloatTensor(next_state_batch)
+        action_batch = T.FloatTensor(action_batch)
+        reward_batch = T.FloatTensor(reward_batch).unsqueeze(1)
+        mask_batch = T.FloatTensor(mask_batch).unsqueeze(1)
+
+        with T.no_grad():
+            next_state_action, next_state_log_pi, _ = self.policy.sample(next_state_batch)
+            qf1_next_target, qf2_next_target = self.critic_target(next_state_batch, next_state_action)
+            min_qf_next_target = T.min(qf1_next_target, qf2_next_target) - self.alpha * next_state_log_pi
+            next_q_value = reward_batch + mask_batch * self.gamma * (min_qf_next_target)
+
+        qf1, qf2 = self.critic(state_batch, action_batch)  # Two Q-functions to mitigate positive bias in the policy improvement step
+        qf1_loss = F.mse_loss(qf1, next_q_value)  # JQ = 𝔼(st,at)~D[0.5(Q1(st,at) - r(st,at) - γ(𝔼st+1~p[V(st+1)]))^2]
+        qf2_loss = F.mse_loss(qf2, next_q_value)  # JQ = 𝔼(st,at)~D[0.5(Q1(st,at) - r(st,at) - γ(𝔼st+1~p[V(st+1)]))^2]
+        qf_loss = qf1_loss + qf2_loss
+
+        if not notrain:
+            self.critic_optim.zero_grad()
+            qf_loss.backward()
+            if not self.sh_net == None:
+                ensure_shared_grads(self.critic, self.sh_net['critic'])
+            self.critic_optim.step()
+
+        pi, log_pi, _ = self.policy.sample(state_batch)
+
+        qf1_pi, qf2_pi = self.critic(state_batch, pi)
+        min_qf_pi = T.min(qf1_pi, qf2_pi)
+
+        policy_loss = ((self.alpha * log_pi) - min_qf_pi).mean() # Jπ = 𝔼st∼D,εt∼N[α * logπ(f(εt;st)|st) − Q(st,f(εt;st))]
+
+        if not notrain:
+            self.policy_optim.zero_grad()
+            policy_loss.backward()
+            if not self.sh_net == None:
+                ensure_shared_grads(self.policy, self.sh_net['policy'])
+            self.policy_optim.step()
 
         if self.automatic_entropy_tuning:
             # alpha_loss = -(self.log_alpha * (log_pi + self.target_entropy).detach()).mean()
@@ -161,24 +164,25 @@ class SAC(SAC_Base):
             # return qf1_loss.item(), qf2_loss.item(), policy_loss.item(), alpha_loss.item(), alpha_tlogs.item()
             pass
         else:
-            # alpha_loss = T.tensor(0.)
-            # alpha_tlogs = T.tensor(self.alpha) # For TensorboardX logs
-            #
-            # if self.replay_buffer.get_total_numstps() % self.update_target_per_step == 0:
-            #     soft_update(self.critic_target, self.critic, self.tau)
-            #
-            #     if not self.sh_net == None:
-            #         ensure_shared_grads(self.critic_target, self.sh_net['target'])
+            alpha_loss = T.tensor(0.)
+            alpha_tlogs = T.tensor(self.alpha) # For TensorboardX logs
 
-            if not self.sh_net == None:
-                self.critic.load_state_dict(self.sh_net['critic'].state_dict())
-                self.critic_target.load_state_dict(self.sh_net['target'].state_dict())
-                self.policy.load_state_dict(self.sh_net['policy'].state_dict())
+            if not notrain:
+                if self.replay_buffer.get_total_numstps() % self.update_target_per_step == 0:
+                    soft_update(self.critic_target, self.critic, self.tau)
 
-            # return qf1_loss.item(), qf2_loss.item(), policy_loss.item(), alpha_loss.item(), alpha_tlogs.item()
+                    if not self.sh_net == None:
+                        ensure_shared_grads(self.critic_target, self.sh_net['target'])
+
+                if not self.sh_net == None:
+                    self.critic.load_state_dict(self.sh_net['critic'].state_dict())
+                    self.critic_target.load_state_dict(self.sh_net['target'].state_dict())
+                    self.policy.load_state_dict(self.sh_net['policy'].state_dict())
+
+            return qf1_loss.item(), qf2_loss.item(), policy_loss.item(), alpha_loss.item(), alpha_tlogs.item()
 
     # Save model parameters
-    def agent_save_model(self, ep_nub, actor_path=None, critic_path=None):
+    def agent_save_model(self, actor_path=None, critic_path=None):
         if not os.path.exists('./DB/AGENT/'):
             os.makedirs('./DB/AGENT/')
         if actor_path is None:
@@ -198,100 +202,48 @@ class SAC(SAC_Base):
             self.critic.load_state_dict(T.load(critic_path))
 
     def run(self):
-        time.sleep(int(self.nub_agent * 5))
-
+        old_steps = self.replay_buffer.get_len()
+        # --------------------------------------------------------------------------------------------------------------
         while True:
-            ep_nub = self.replay_buffer.add_ep()
-            ep_reward = 0
-            ep_steps = 0
-            done = False
-            state = self.env.reset(file_name=f'{ep_nub}', current_ep=ep_nub)
-
-            while not done:
-                # if self.start_step > self.replay_buffer.get_total_numstps():
-                #     action = 0  # random
-                # else:
-                #     action = self.agent_select_action(state)
-
-                # Env interaction --------------------------------------------------------------------------------------
-                action = self.agent_select_action(state)
+            if old_steps != self.replay_buffer.get_len():
 
                 if self.replay_buffer.get_len() > self.batch_size:
+                    if self.replay_buffer.get_len() // 100 == 0:
+                        print(self.p_info + f'[Steps|{self.replay_buffer.get_len():10}][Train]')
                     for i in range(self.update_per_step):
                         batch_data = self.replay_buffer.sample(batch_size=self.batch_size)
-                        self.agent_update_parameters(batch_data)    # get weight from master
+                        critic_1_loss, critic_2_loss, p_loss, ent_loss, alpha = self.agent_update_parameters(batch_data)
 
-                        # self.replay_buffer.add_train_info(critic_1_loss, critic_2_loss, p_loss, ent_loss, alpha)
+                        self.replay_buffer.add_train_info(critic_1_loss, critic_2_loss, p_loss, ent_loss, alpha)
+                else:
+                    print(self.p_info + f'[Steps|{self.replay_buffer.get_len():10}]')
+                old_steps = self.replay_buffer.get_len()
 
-                next_state, reward, done, AMod = self.env.step(A=action)
-                # ------------------------------------------------------------------------------------------------------
-                ep_steps += 1
-                ep_reward += reward
-                self.replay_buffer.add_total_numsteps()
-
-                # 종료 조건 섹션 -----------------------------------------------------------------------------------------
-                done = True if ep_steps > 35 else False
-                mask = 1 if ep_steps == 60 else float(not done)
-                # ------------------------------------------------------------------------------------------------------
-                self.replay_buffer.push(state, action, reward, next_state, mask)
-                state = next_state
-
-                print(self.p_info + f'[W][ep_nub|{ep_nub:10}][ep_steps|{ep_steps:10}][mask|{mask:10}][done|{done:10}]')
-
-                # End episode done line
+                # End worker line
                 if self.replay_buffer.get_finish_info(): break
+            else:
+                pass
+        print(self.p_info + f'Done Training ... Model Save ...')
+        self.agent_save_model()
 
-            self.replay_buffer.add_ep_end_info(acc_reward=ep_reward)
-            # End worker line
-            if self.replay_buffer.get_finish_info(): break
-        # --------------------------------------------------------------------------------------------------------------
-        print(self.p_info + f'Done Agent Training ... Change Test Mode ...')
+        print(self.p_info + f'All agent Test Mode ...')
+
         # --------------------------------------------------------------------------------------------------------------
         while True:
-            ep_nub = self.replay_buffer.add_ep()
-            ep_reward = 0
-            ep_steps = 0
-            done = False
-            state = self.env.reset(file_name=f'{ep_nub}', current_ep=ep_nub)
-
-            while not done:
-                # if self.start_step > self.replay_buffer.get_total_numstps():
-                #     action = 0  # random
-                # else:
-                #     action = self.agent_select_action(state)
-
-                # Env interaction --------------------------------------------------------------------------------------
-                action = self.agent_select_action(state)
-
+            if old_steps != self.replay_buffer.get_len():
+                print(self.p_info + f'[Steps|{self.replay_buffer.get_len():10}]')
                 if self.replay_buffer.get_len() > self.batch_size:
+                    print(self.p_info + f'[Steps|{self.replay_buffer.get_len():10}][Test]')
                     for i in range(self.update_per_step):
                         batch_data = self.replay_buffer.sample(batch_size=self.batch_size)
-                        self.agent_update_parameters(batch_data)    # get weight from master
+                        critic_1_loss, critic_2_loss, p_loss, ent_loss, alpha = self.agent_update_parameters(batch_data,
+                                                                                                             notrain=True)
 
-                        # self.replay_buffer.add_train_info(critic_1_loss, critic_2_loss, p_loss, ent_loss, alpha)
+                        self.replay_buffer.add_train_info(critic_1_loss, critic_2_loss, p_loss, ent_loss, alpha)
 
-                next_state, reward, done, AMod = self.env.step(A=action)
-                # ------------------------------------------------------------------------------------------------------
-                ep_steps += 1
-                ep_reward += reward
-                self.replay_buffer.add_total_numsteps()
+                old_steps = self.replay_buffer.get_len()
 
-                # 종료 조건 섹션 -----------------------------------------------------------------------------------------
-                done = True if ep_steps > 35 else False
-                mask = 1 if ep_steps == 60 else float(not done)
-                # ------------------------------------------------------------------------------------------------------
-                # self.replay_buffer.push(state, action, reward, next_state, mask)
-                state = next_state
-
-                print(self.p_info + f'[W][ep_nub|{ep_nub:10}][ep_steps|{ep_steps:10}][mask|{mask:10}][done|{done:10}]')
-
-            self.replay_buffer.add_ep_end_info(acc_reward=ep_reward)
-
-
-
-
-
-
-
-
-
+                # End worker line
+                # if self.replay_buffer.get_finish_info(): break
+            else:
+                pass

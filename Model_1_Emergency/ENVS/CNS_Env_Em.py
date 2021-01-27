@@ -1,7 +1,7 @@
-from Model_Basic.ENVS.CNS_Basic import CNS
+from Model_0_Basic.ENVS.CNS_Basic import CNS
 
-from Model_Emergency.ENVS.PTCurve import PTCureve
-from Model_Emergency.ENVS.CoolingRate import CoolingRATE
+from Model_1_Emergency.ENVS.PTCurve import PTCureve
+from Model_1_Emergency.ENVS.CoolingRate import CoolingRATE
 
 import numpy as np
 import time
@@ -237,7 +237,7 @@ class ENVCNS(CNS):
         self.Loger_txt += f'R|{r}|{r_1}|{r_2}|{r_3}|{r_4}|{r_5}|{r_w}|'
         return r
 
-    def get_done(self, r):
+    def get_done(self, r, AMod):
         d = False
         cond = {
             1: True if PTCureve().Check(Temp=self.CMem.AVGTemp, Pres=self.CMem.PZRPres) == 1 else False,  # 0이면 정상
@@ -530,7 +530,7 @@ class ENVCNS(CNS):
         self.ENVStep += 1
 
         reward = self.get_reward(AMod)                                      # [r(t+1)]
-        done, reward = self.get_done(reward)                                # [d(t+1)]
+        done, reward = self.get_done(reward, AMod)                          # [d(t+1)]
         next_state, next_state_list = self.get_state()                      # [s(t+1)]
         self.Loger_txt += f'NS|{next_state_list}|'                          #
         # ----------------------------------------------------------

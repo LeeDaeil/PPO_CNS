@@ -23,7 +23,7 @@ class Board(QWidget):
         super().__init__()
 
         self.replay_buffer = replay_buffer
-        self.abs_path = 'C:/Users/Com/Desktop/DL_Code/Soft_Actor_Critic_Agent_CNS/DB/'
+        self.abs_path = 'H:/Code/Soft_Actor_Critic_Agent_CNS/DB/'
 
         self.initUI()
 
