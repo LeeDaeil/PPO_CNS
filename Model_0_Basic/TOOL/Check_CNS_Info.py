@@ -36,6 +36,17 @@ def get_cns_info():
             14: {'CNSIP': '192.168.0.213', 'COMIP': '192.168.0.200', 'PORT': 7305, 'PID': False},
         }
 
+def get_abs_path():
+    """
+    현재 컴퓨터의 ip를 확인후 이에 따라 절대 경로 설정
+    :return:
+    """
+    com_ip = socket.gethostbyname(socket.getfqdn())
+
+    if com_ip == '192.168.0.29':
+        return 'H:/Code/Soft_Actor_Critic_Agent_CNS/DB/'
+    else:
+        return 'C:/Users/Com/Desktop/DL_Code/Soft_Actor_Critic_Agent_CNS/DB/'
 
 if __name__ == '__main__':
     print(get_cns_info())

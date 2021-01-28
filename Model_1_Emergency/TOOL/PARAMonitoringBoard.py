@@ -8,7 +8,7 @@ from PyQt5.QtCore import QTimer
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 from Model_1_Emergency.ENVS.PTCurve import PTCureve
-
+from Model_0_Basic.TOOL.Check_CNS_Info import get_abs_path
 # ======================================================================================================================
 # Training Board
 
@@ -28,7 +28,7 @@ class BoardUI(QWidget):
         self.nub_gp = nub_gp
         self.selected_nub = 0
 
-        self.abs_path = 'C:/Users/Com/Desktop/DL_Code/Soft_Actor_Critic_Agent_CNS/DB/'
+        self.abs_path = get_abs_path()
 
         self.initUI()
 
@@ -116,9 +116,9 @@ class BoardUI(QWidget):
 
     def click_save_fig(self):
         if self.line_ed.text() != '':
-            self.fig.savefig(f'{self.abs_path}/TRAIN_INFO/{self.line_ed.text()}.svg', format='svg', dpi=1200)
+            self.fig.savefig(f'{self.abs_path}TRAIN_INFO/{self.line_ed.text()}.svg', format='svg', dpi=1200)
         else:
-            self.fig.savefig(f'{self.abs_path}/TRAIN_INFO/SaveFIg.svg', format='svg', dpi=1200)
+            self.fig.savefig(f'{self.abs_path}TRAIN_INFO/SaveFIg.svg', format='svg', dpi=1200)
 
     def resizeEvent(self, e):
         button_width = self.button_area_wid.width() + 5

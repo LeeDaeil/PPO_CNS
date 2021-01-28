@@ -185,10 +185,10 @@ class ENVCNS(CNS):
         state = []
         for para, x_round, x_min, x_max in self.input_info:
             if para in self.mem.keys():
-                state.append(self.normalize(self.mem[para]['Val'], x_round, x_min, x_max))
+                _ = self.mem[para]['Val']
             else:
-                # ADD logic ----- 계산된 값을 사용하고 싶을 때
-                pass
+                _ = self.PID_Prs.SetPoint if para == 'DSetPoint' else 0
+            state.append(self.normalize(_, x_round, x_min, x_max))
 
         return np.array(state), state
 
@@ -234,7 +234,7 @@ class ENVCNS(CNS):
         r_w = [1 * r_1, 1 * r_2, 0 * r_3, 0 * r_4, 0 * r_5]
         r = sum(r_w)
         # --------------------------------------------------------------------------------------------------------------
-        self.Loger_txt += f'R|{r}|{r_1}|{r_2}|{r_3}|{r_4}|{r_5}|{r_w}|'
+        self.Loger_txt += f'R|{r:10}|{r_1:10}|{r_2:10}|{r_3:10}|{r_4:10}|{r_5:10}|'
         return r
 
     def get_done(self, r, AMod):

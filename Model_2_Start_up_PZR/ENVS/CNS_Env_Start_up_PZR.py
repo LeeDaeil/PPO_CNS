@@ -66,24 +66,27 @@ class ENVCNS(CNS):
         self.input_info = [
             # (para, x_round, x_min, x_max), (x_min=0, x_max=0 is not normalized.)
             ('BHV142',     1, 0,   0),       # Letdown(HV142)
-            # ('WRHRCVC',    1, 0,   0),       # RHR to CVCS Flow
-            # ('WNETLD',     1, 0,   10),      # Total Letdown Flow
-            # ('BFV122',     1, 0,   0),       # ChargingValve(FV122)
-            # ('WNETCH',     1, 0,   10),      # Total Charging Flow
+            ('WRHRCVC',    1, 0,   0),       # RHR to CVCS Flow
+            ('WNETLD',     1, 0,   10),      # Total Letdown Flow
+            ('BFV122',     1, 0,   0),       # ChargingValve(FV122)
+            ('WNETCH',     1, 0,   10),      # Total Charging Flow
             ('ZINST66',    1, 0,   30),      # PZR spray
             ('ZINST65',    1, 0,   160),     # RCSPressure
             ('ZINST63',    1, 0,   100),     # PZRLevel
-            # ('UUPPPL',     1, 0,   200),     # Core Exit Temperature
-            # ('UPRZ',       1, 0,   300),     # PZR Temperature
-            # ('ZINST36',  1, 0,   0),      # Letdown Pressrue
-            # ('SetPres',    1, 0,   100),      # Pres-Setpoint
-            # ('SetLevel',   1, 0,   30),      # Level-Setpoint
-            # ('ErrPres',    1, 0,   100),     # RCSPressure - setpoint
-            # ('UpPres',     1, 0,   100),     # RCSPressure - Up
-            # ('DownPres',   1, 0,   100),     # RCSPressure - Down
-            # ('ErrLevel',   1, 0,   100),     # PZRLevel - setpoint
-            # ('UpLevel',    1, 0,   100),     # PZRLevel - Up
-            # ('DownLevel',  1, 0,   100),     # PZRLevel - Down
+            ('UUPPPL',     1, 0,   200),     # Core Exit Temperature
+            ('UPRZ',       1, 0,   300),     # PZR Temperature
+            ('ZINST36',    1, 0,   0),       # Letdown Pressrue
+
+            ('DSetPoint',  1, 0,   100),     # Pres-Setpoint
+
+            # ('SetPres',    1, 0,   100),   # Pres-Setpoint
+            # ('SetLevel',   1, 0,   30),    # Level-Setpoint
+            # ('ErrPres',    1, 0,   100),   # RCSPressure - setpoint
+            # ('UpPres',     1, 0,   100),   # RCSPressure - Up
+            # ('DownPres',   1, 0,   100),   # RCSPressure - Down
+            # ('ErrLevel',   1, 0,   100),   # PZRLevel - setpoint
+            # ('UpLevel',    1, 0,   100),   # PZRLevel - Up
+            # ('DownLevel',  1, 0,   100),   # PZRLevel - Down
         ]
 
         self.action_space = 2       # HV142, Spray, / Charging Valve
@@ -128,10 +131,10 @@ class ENVCNS(CNS):
         state = []
         for para, x_round, x_min, x_max in self.input_info:
             if para in self.mem.keys():
-                state.append(self.normalize(self.mem[para]['Val'], x_round, x_min, x_max))
+                _ = self.mem[para]['Val']
             else:
-                # ADD logic ----- 계산된 값을 사용하고 싶을 때
-                pass
+                _ = self.PID_Prs.SetPoint if para == 'DSetPoint' else 0
+            state.append(self.normalize(_, x_round, x_min, x_max))
 
         return np.array(state), state
 
@@ -157,24 +160,35 @@ class ENVCNS(CNS):
 
         if self.CMem.PZRLevl >= 40:  # 기포 생성 이전
             # 압력
-            r_1 += get_distance_r(self.CMem.PZRPres, self.PID_Prs.SetPoint, max_val=1, distance_normal=10)
+            #r_1 += get_distance_r(self.CMem.PZRPres, self.PID_Prs.SetPoint, max_val=1, distance_normal=10)
+            r_1 += - abs(self.CMem.PZRPres - self.PID_Prs.SetPoint)
             # 수위
-            r_2 += get_distance_r(self.CMem.PZRLevl, self.PID_Lev.SetPoint, max_val=1, distance_normal=70) / 20
+            #r_2 += get_distance_r(self.CMem.PZRLevl, self.PID_Lev.SetPoint, max_val=1, distance_normal=70) / 20
             # 제어
-            if A[0] == 0: r_3 += 0.1
+            for i in [0, 1]:
+                if -0.3 <= A[i] < 0.3:
+                    pass
+                else:
+                    r_3 += - 1
+
         else:  # 기포 생성 이후
             # 압력
-            r_1 += get_distance_r(self.CMem.PZRPres, self.PID_Prs.SetPoint, max_val=1, distance_normal=10)
+            r_1 += - abs(self.CMem.PZRPres - self.PID_Prs.SetPoint)
             # 수위
-            r_2 += get_distance_r(self.CMem.PZRLevl, self.PID_Lev.SetPoint, max_val=1, distance_normal=70) / 20
+            r_2 += - abs(self.CMem.PZRLevl - self.PID_Lev.SetPoint)
             # 제어
             # if abs(A[0]) < 0.6 and abs(A[1]) < 0.6: c+= 0.05
-            # 단계적 목표
+            # 제어
+            for i in [0, 1]:
+                if -0.3 <= A[i] < 0.3:
+                    pass
+                else:
+                    r_3 += - 1
 
         r_w = [1 * r_1, 1 * r_2, 1 * r_3, 0 * r_4, 0 * r_5]
         r = sum(r_w)
         # --------------------------------------------------------------------------------------------------------------
-        self.Loger_txt += f'R|{r}|{r_1}|{r_2}|{r_3}|{r_4}|{r_5}|{r_w}|'
+        self.Loger_txt += f'R|{r}|{r_1}|{r_2}|{r_3}|{r_4}|{r_5}|'
         return r
 
     def get_done(self, r, AMod):

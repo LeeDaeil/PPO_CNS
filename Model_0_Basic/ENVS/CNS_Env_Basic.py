@@ -67,10 +67,10 @@ class ENVCNS(CNS):
         state = []
         for para, x_round, x_min, x_max in self.input_info:
             if para in self.mem.keys():
-                state.append(self.normalize(self.mem[para]['Val'], x_round, x_min, x_max))
+                _ = self.mem[para]['Val']
             else:
-                # ADD logic ----- 계산된 값을 사용하고 싶을 때
-                pass
+                _ = self.PID_Prs.SetPoint if para == 'DSetPoint' else 0
+            state.append(self.normalize(_, x_round, x_min, x_max))
 
         return np.array(state), state
 
@@ -81,7 +81,7 @@ class ENVCNS(CNS):
         :return:
         """
         r = 0
-        self.Loger_txt += f'R|{r}|'
+        self.Loger_txt += f'R|{r:10}|'
         return r
 
     def get_done(self, r, AMod):

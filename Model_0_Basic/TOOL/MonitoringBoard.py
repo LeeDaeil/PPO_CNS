@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QTimer
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
+from Model_0_Basic.TOOL.Check_CNS_Info import get_abs_path
 # ======================================================================================================================
 # Training Board
 
@@ -23,7 +24,7 @@ class Board(QWidget):
         super().__init__()
 
         self.replay_buffer = replay_buffer
-        self.abs_path = 'H:/Code/Soft_Actor_Critic_Agent_CNS/DB/'
+        self.abs_path = get_abs_path()
 
         self.initUI()
 
@@ -84,7 +85,7 @@ class Board(QWidget):
             print(e)
 
     def save_fig(self, ep):
-        self.fig.savefig(f'{self.abs_path}/TRAIN_INFO/{ep}.svg', format='svg', dpi=1200)
+        self.fig.savefig(f'{self.abs_path}TRAIN_INFO/{ep}.svg', format='svg', dpi=1200)
 
 # ======================================================================================================================
 
