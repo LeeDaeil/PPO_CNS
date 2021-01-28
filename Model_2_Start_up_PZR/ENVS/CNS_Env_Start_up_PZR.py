@@ -65,17 +65,17 @@ class ENVCNS(CNS):
         # RL -----------------------------------------------------------------------------------------------------------
         self.input_info = [
             # (para, x_round, x_min, x_max), (x_min=0, x_max=0 is not normalized.)
-            ('BHV142',     1, 0,   0),       # Letdown(HV142)
-            ('WRHRCVC',    1, 0,   0),       # RHR to CVCS Flow
-            ('WNETLD',     1, 0,   10),      # Total Letdown Flow
-            ('BFV122',     1, 0,   0),       # ChargingValve(FV122)
-            ('WNETCH',     1, 0,   10),      # Total Charging Flow
-            ('ZINST66',    1, 0,   30),      # PZR spray
+            # ('BHV142',     1, 0,   0),       # Letdown(HV142)
+            # ('WRHRCVC',    1, 0,   0),       # RHR to CVCS Flow
+            # ('WNETLD',     1, 0,   10),      # Total Letdown Flow
+            # ('BFV122',     1, 0,   0),       # ChargingValve(FV122)
+            # ('WNETCH',     1, 0,   10),      # Total Charging Flow
+            # ('ZINST66',    1, 0,   30),      # PZR spray
             ('ZINST65',    1, 0,   160),     # RCSPressure
             ('ZINST63',    1, 0,   100),     # PZRLevel
-            ('UUPPPL',     1, 0,   200),     # Core Exit Temperature
+            # ('UUPPPL',     1, 0,   200),     # Core Exit Temperature
             ('UPRZ',       1, 0,   300),     # PZR Temperature
-            ('ZINST36',    1, 0,   0),       # Letdown Pressrue
+            # ('ZINST36',    1, 0,   0),       # Letdown Pressrue
 
             ('DSetPoint',  1, 0,   100),     # Pres-Setpoint
 
@@ -187,7 +187,7 @@ class ENVCNS(CNS):
 
         r_w = [1 * r_1, 1 * r_2, 1 * r_3, 0 * r_4, 0 * r_5]
         r = sum(r_w)
-        # -------------------------------------------------------------------------------------------------------------
+        # --------------------------------------------------------------------------------------------------------------
         self.Loger_txt += f'R|{r}|{r_1}|{r_2}|{r_3}|{r_4}|{r_5}|'
         return r
 

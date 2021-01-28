@@ -137,31 +137,28 @@ class Board(BoardUI):
         timer.start()
 
     def update_plot(self):
-        try:
-            KCNTOMS, UUPPPL, UPRZ, ZINST65, ZINST63, BHV142, BFV122, ZINST66, Reward = self.replay_buffer.get_para(f'{self.selected_nub}')
-            _ = [ax.clear() for ax in self.axs]
+        KCNTOMS, UUPPPL, UPRZ, ZINST65, ZINST63, BHV142, BFV122, ZINST66, Reward = self.replay_buffer.get_para(f'{self.selected_nub}')
+        _ = [ax.clear() for ax in self.axs]
 
-            if len(KCNTOMS) > 1:
-                self.axs[0].plot(Reward, label='R')  # Reward
+        if len(KCNTOMS) > 1:
+            self.axs[0].plot(Reward, label='R')  # Reward
 
-                self.axs[1].plot(KCNTOMS, UUPPPL, label='CoreExitTemp')
-                self.axs[1].plot(KCNTOMS, UPRZ, label='PzrTemp')
+            self.axs[1].plot(KCNTOMS, UUPPPL, label='CoreExitTemp')
+            self.axs[1].plot(KCNTOMS, UPRZ, label='PzrTemp')
 
-                self.axs[2].plot(KCNTOMS, ZINST65, label='PZR Pres')
-                self.axs[2].plot(KCNTOMS, ZINST63, label='PZR Level')
+            self.axs[2].plot(KCNTOMS, ZINST65, label='PZR Pres')
+            self.axs[2].plot(KCNTOMS, ZINST63, label='PZR Level')
 
-                self.axs[3].plot(KCNTOMS, BHV142, label='Letdown Pos')
-                self.axs[3].plot(KCNTOMS, BFV122, label='Charging Pos')
-                self.axs[3].plot(KCNTOMS, [_/31 for _ in ZINST66], label='PZR Spray Pos')
+            self.axs[3].plot(KCNTOMS, BHV142, label='Letdown Pos')
+            self.axs[3].plot(KCNTOMS, BFV122, label='Charging Pos')
+            self.axs[3].plot(KCNTOMS, [_/31 for _ in ZINST66], label='PZR Spray Pos')
 
-                for ax in self.axs:
-                    ax.legend()
-                    ax.grid()
+            for ax in self.axs:
+                ax.legend()
+                ax.grid()
 
-            self.fig.set_tight_layout(True)
-            self.fig.canvas.draw()
-        except Exception as e:
-            print(e)
+        self.fig.set_tight_layout(True)
+        self.fig.canvas.draw()
 
 # ======================================================================================================================
 if __name__ == '__main__':
