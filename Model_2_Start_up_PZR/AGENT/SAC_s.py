@@ -238,7 +238,7 @@ class SAC(SAC_Base):
 
                             # self.replay_buffer.add_train_info(critic_1_loss, critic_2_loss, p_loss, ent_loss, alpha)
 
-                    next_state, reward, done, AMod = self.env.step(A=action)
+                    next_state, reward, done, ep_done, AMod = self.env.step(A=action)
                     self.add_para(reward)
 
                     # --------------------------------------------------------------------------------------------------
@@ -247,7 +247,7 @@ class SAC(SAC_Base):
                     self.replay_buffer.add_total_numsteps()
 
                     # 종료 조건 섹션 -------------------------------------------------------------------------------------
-                    mask = 1 if self.env.CMem.CTIME > 350000 else float(not done)
+                    mask = 1 if ep_done else float(not done)
                     # --------------------------------------------------------------------------------------------------
                     self.replay_buffer.push(state, action, reward, next_state, mask)
                     state = next_state
@@ -258,7 +258,7 @@ class SAC(SAC_Base):
                     # 자동 액션들 수행.
                     # action 이 계산이 되어도 env 에서 액션이 들어가지 않음.
                     action = self.agent_select_action(state)
-                    next_state, reward, done, AMod = self.env.step(A=action)
+                    next_state, reward, done, ep_done, AMod = self.env.step(A=action)
                     self.add_para(reward)
                     state = next_state
 
@@ -300,7 +300,7 @@ class SAC(SAC_Base):
 
                             # self.replay_buffer.add_train_info(critic_1_loss, critic_2_loss, p_loss, ent_loss, alpha)
 
-                    next_state, reward, done, AMod = self.env.step(A=action)
+                    next_state, reward, done, ep_done, AMod = self.env.step(A=action)
                     self.add_para(reward)
 
                     # --------------------------------------------------------------------------------------------------
@@ -309,7 +309,7 @@ class SAC(SAC_Base):
                     self.replay_buffer.add_total_numsteps()
 
                     # 종료 조건 섹션 -------------------------------------------------------------------------------------
-                    mask = 1 if self.env.CMem.CTIME > 350000 else float(not done)
+                    mask = 1 if ep_done else float(not done)
                     # --------------------------------------------------------------------------------------------------
                     # self.replay_buffer.push(state, action, reward, next_state, mask)
                     state = next_state
@@ -320,7 +320,7 @@ class SAC(SAC_Base):
                     # 자동 액션들 수행.
                     # action 이 계산이 되어도 env 에서 액션이 들어가지 않음.
                     action = self.agent_select_action(state)
-                    next_state, reward, done, AMod = self.env.step(A=action)
+                    next_state, reward, done, ep_done, AMod = self.env.step(A=action)
                     self.add_para(reward)
                     state = next_state
 

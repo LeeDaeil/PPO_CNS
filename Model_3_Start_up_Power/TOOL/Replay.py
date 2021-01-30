@@ -12,9 +12,10 @@ class ReplayMemory(Replay.ReplayMemory):
             f'{i}': {
                 'KCNTOMS': [],
 
-                'UUPPPL': [],   'UPRZ': [],
-                'ZINST65': [],  'ZINST63': [],
-                'BHV142': [],   'BFV122': [],   'ZINST66': [],
+                'QPROREL': [],   'Ref_P': [],   'Ref_UpP': [],  'Ref_DoP': [],
+                'rod_pos1': [],  'rod_pos2': [],  'rod_pos3': [],  'rod_pos4': [],
+
+                'EBOAC': [], 'KBCDO16': [], 'WBOAC': [],
 
                 'Reward': [],
             } for i in range(self.nub_env)
@@ -52,45 +53,58 @@ class ReplayMemory(Replay.ReplayMemory):
 
     # ------------------------------------------------------------------------------------------------------------------
     # 추가된 기능
-    def add_para(self, env_i, KCNTOMS, UUPPPL, UPRZ, ZINST65, ZINST63, BHV142, BFV122, ZINST66, Reward):
+    def add_para(self, env_i, KCNTOMS, QPROREL, Ref_P, Ref_UpP, Ref_DoP,
+                 rod_pos1, rod_pos2, rod_pos3, rod_pos4, EBOAC, KBCDO16, WBOAC,
+                 Reward):
         self.gp_db[env_i]['KCNTOMS'].append(KCNTOMS)
 
-        self.gp_db[env_i]['UUPPPL'].append(UUPPPL)
-        self.gp_db[env_i]['UPRZ'].append(UPRZ)
+        self.gp_db[env_i]['QPROREL'].append(QPROREL)
+        self.gp_db[env_i]['Ref_P'].append(Ref_P)
+        self.gp_db[env_i]['Ref_UpP'].append(Ref_UpP)
+        self.gp_db[env_i]['Ref_DoP'].append(Ref_DoP)
 
-        self.gp_db[env_i]['ZINST65'].append(ZINST65)
-        self.gp_db[env_i]['ZINST63'].append(ZINST63)
+        self.gp_db[env_i]['rod_pos1'].append(rod_pos1)
+        self.gp_db[env_i]['rod_pos2'].append(rod_pos2)
+        self.gp_db[env_i]['rod_pos3'].append(rod_pos3)
+        self.gp_db[env_i]['rod_pos4'].append(rod_pos4)
 
-        self.gp_db[env_i]['BHV142'].append(BHV142)
-        self.gp_db[env_i]['BFV122'].append(BFV122)
-        self.gp_db[env_i]['ZINST66'].append(ZINST66)
+        self.gp_db[env_i]['EBOAC'].append(EBOAC)
+        self.gp_db[env_i]['KBCDO16'].append(KBCDO16)
+        self.gp_db[env_i]['WBOAC'].append(WBOAC)
 
         self.gp_db[env_i]['Reward'].append(Reward)
 
     def get_para(self, env_i):
         KCNTOMS = self.gp_db[env_i]['KCNTOMS']
 
-        UUPPPL = self.gp_db[env_i]['UUPPPL']
-        UPRZ = self.gp_db[env_i]['UPRZ']
+        QPROREL = self.gp_db[env_i]['QPROREL']
+        Ref_P = self.gp_db[env_i]['Ref_P']
+        Ref_UpP = self.gp_db[env_i]['Ref_UpP']
+        Ref_DoP = self.gp_db[env_i]['Ref_DoP']
 
-        ZINST65 = self.gp_db[env_i]['ZINST65']
-        ZINST63 = self.gp_db[env_i]['ZINST63']
+        rod_pos1 = self.gp_db[env_i]['rod_pos1']
+        rod_pos2 = self.gp_db[env_i]['rod_pos2']
+        rod_pos3 = self.gp_db[env_i]['rod_pos3']
+        rod_pos4 = self.gp_db[env_i]['rod_pos4']
 
-        BHV142 = self.gp_db[env_i]['BHV142']
-        BFV122 = self.gp_db[env_i]['BFV122']
-        ZINST66 = self.gp_db[env_i]['ZINST66']
+        EBOAC = self.gp_db[env_i]['EBOAC']
+        KBCDO16 = self.gp_db[env_i]['KBCDO16']
+        WBOAC = self.gp_db[env_i]['WBOAC']
 
         Reward = self.gp_db[env_i]['Reward']
 
-        return KCNTOMS, UUPPPL, UPRZ, ZINST65, ZINST63, BHV142, BFV122, ZINST66, Reward
+        return KCNTOMS, QPROREL, Ref_P, Ref_UpP, Ref_DoP,\
+               rod_pos1, rod_pos2, rod_pos3, rod_pos4, EBOAC, KBCDO16, WBOAC,\
+               Reward
 
     def clear_para(self, env_i):
         self.gp_db[env_i] = {
                 'KCNTOMS': [],
 
-                'UUPPPL': [],   'UPRZ': [],
-                'ZINST65': [],  'ZINST63': [],
-                'BHV142': [],   'BFV122': [],   'ZINST66': [],
+                'QPROREL': [],   'Ref_P': [],   'Ref_UpP': [],  'Ref_DoP': [],
+                'rod_pos1': [],  'rod_pos2': [],  'rod_pos3': [],  'rod_pos4': [],
+
+                'EBOAC': [], 'KBCDO16': [], 'WBOAC': [],
 
                 'Reward': [],
             }

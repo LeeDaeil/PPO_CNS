@@ -151,3 +151,34 @@ class DeterministicPolicy(nn.Module):
         self.action_bias = self.action_bias.to(device)
         self.noise = self.noise.to(device)
         return super(DeterministicPolicy, self).to(device)
+
+# A3C
+class A3CNetwork(nn.Module):
+    def __init__(self, num_inputs, num_actions, hidden_dim):
+        super(A3CNetwork, self).__init__()
+
+        # Critic architecture
+        self.linear1 = nn.Linear(num_inputs, hidden_dim)
+        self.linear2 = nn.Linear(hidden_dim, hidden_dim)
+        self.linear3 = nn.Linear(hidden_dim, 1)
+
+        # Value architecture
+        self.linear4 = nn.Linear(num_inputs, hidden_dim)
+        self.linear5 = nn.Linear(hidden_dim, hidden_dim)
+        self.linear6 = nn.Linear(hidden_dim, num_actions)
+
+        self.apply(weights_init_)
+
+    def forward(self, state):
+        # xu = torch.cat([state, action], 1)
+        xu = state
+
+        x1 = F.relu(self.linear1(xu))
+        x1 = F.relu(self.linear2(x1))
+        x1 = self.linear3(x1)
+
+        x2 = F.relu(self.linear4(xu))
+        x2 = F.relu(self.linear5(x2))
+        x2 = self.linear6(x2)
+
+        return x1, x2

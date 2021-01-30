@@ -69,9 +69,12 @@ class ENVCNS(CNS):
             if para in self.mem.keys():
                 _ = self.mem[para]['Val']
             else:
-                _ = self.PID_Prs.SetPoint if para == 'DSetPoint' else 0
+                _ = self.PID_Prs.SetPoint if para == 'DSetPoint' else None
+                # ------------------------------------------------------------------------------------------------------
+                if _ is None:
+                    raise ValueError(f'{para} is not in self.input_info')
+                # ------------------------------------------------------------------------------------------------------
             state.append(self.normalize(_, x_round, x_min, x_max))
-
         return np.array(state), state
 
     def get_reward(self, A):
@@ -85,21 +88,21 @@ class ENVCNS(CNS):
         return r
 
     def get_done(self, r, AMod):
-        d = False
+        d, ep_d = False, False
 
         cond = {
             1: True,
         }
-
+        # --------------------------------------------------------------------------------------------------------------
         if cond[1]:
             pass
         else:
             pass
-
+        # --------------------------------------------------------------------------------------------------------------
         if d: print(cond)
-
-        self.Loger_txt += f'D|{d}|{cond}|'
-        return d, r
+        # --------------------------------------------------------------------------------------------------------------
+        self.Loger_txt += f'D|{d}|{ep_d}|{cond}|'
+        return d, ep_d, r
 
     def _send_control_save(self, zipParaVal):
         super(ENVCNS, self)._send_control_save(para=zipParaVal[0], val=zipParaVal[1])
@@ -147,14 +150,14 @@ class ENVCNS(CNS):
         self.ENVStep += 1
 
         reward = self.get_reward(AMod)                                      # [r(t+1)]
-        done, reward = self.get_done(reward, AMod)                          # [d(t+1)]
+        done, ep_done, reward = self.get_done(reward, AMod)                 # [d(t+1)]
         next_state, next_state_list = self.get_state()                      # [s(t+1)]
         self.Loger_txt += f'NS|{next_state_list}|'                          #
         # ----------------------------------------------------------
         self.ENVlogging(s=self.Loger_txt)
         self.state_txt = next_state_list                                    # [s(t) <- s(t+1)]
         self.Loger_txt = ''
-        return next_state, reward, done, AMod
+        return next_state, reward, done, ep_done, AMod
 
     def reset(self, file_name, current_ep):
         # 1] CNS 상태 초기화 및 초기화된 정보 메모리에 업데이트

@@ -12,33 +12,113 @@ class CMem:
         self.m = mem  # Line CNSmem -> getmem
 
         self.StartRL = 1
+
+        self.AllRodOut = False
+        self.BuxFix_ini = False
+
         self.update()
 
     def update(self):
         self.CTIME = self.m['KCNTOMS']['Val']  # CNS Time
-        self.CDelt = self.m['TDELTA']['Val']
-        self.PZRPres = self.m['ZINST65']['Val']
-        self.PZRLevl = self.m['ZINST63']['Val']
-        self.PZRTemp = self.m['UPRZ']['Val']
-        self.ExitCoreT = self.m['UUPPPL']['Val']
+
+        self.Reactor_power = self.m['QPROREL']['Val']   # 0.02 ~ 1.00
+        self.TRIP = self.m['KRXTRIP']['Val']
+        # 온도 고려 2019-11-04
+        self.Tref_Tavg = self.m['ZINST15']['Val']  # Tref-Tavg
+        self.Tavg = self.m['UAVLEGM']['Val']  # 308.21
+        self.Tref = self.m['UAVLEGS']['Val']  # 308.22
+        # 제어봉 Pos
+        self.rod_pos = [self.m[nub_rod]['Val'] for nub_rod in ['KBCDO10', 'KBCDO9', 'KBCDO8', 'KBCDO7']]
+
+        if self.AllRodOut == False:
+            Sw = True if self.rod_pos[0] == 228 else False
+            Sw = True if self.rod_pos[1] == 228 else False
+            Sw = True if self.rod_pos[2] == 228 else False
+            Sw = True if self.rod_pos[3] >= 216 else False
+            self.AllRodOut = Sw
+
+        # self.charging_valve_state = self.m['KLAMPO95']['Val']
+        self.main_feed_valve_1_state = self.m['KLAMPO147']['Val']
+        self.main_feed_valve_2_state = self.m['KLAMPO148']['Val']
+        self.main_feed_valve_3_state = self.m['KLAMPO149']['Val']
+        self.main_feed_valves_state = self.m['KLAMPO147']['Val'] + self.m['KLAMPO148']['Val'] + self.m['KLAMPO149']['Val']
+        self.vct_level = self.m['ZVCT']['Val']
+        # self.pzr_level = self.m['ZINST63']['Val']
+        #
+        self.Turbine_setpoint = self.m['KBCDO17']['Val']
+        self.Turbine_ac = self.m['KBCDO18']['Val']  # Turbine ac condition
+        self.Turbine_real = self.m['KBCDO19']['Val']
+        self.load_set = self.m['KBCDO20']['Val']  # Turbine load set point
+        self.load_rate = self.m['KBCDO21']['Val']  # Turbine load rate
+        self.Mwe_power = self.m['KBCDO22']['Val']
+        #
+        self.Netbreak_condition = self.m['KLAMPO224']['Val']  # 0 : Off, 1 : On
+        self.trip_block = self.m['KLAMPO22']['Val']  # Trip block condition 0 : Off, 1 : On
+        #
+        self.steam_dump_condition = self.m['KLAMPO150']['Val']  # 0: auto 1: man
+        self.heat_drain_pump_condition = self.m['KLAMPO244']['Val']  # 0: off, 1: on
+        self.main_feed_pump_1 = self.m['KLAMPO241']['Val']  # 0: off, 1: on
+        self.main_feed_pump_2 = self.m['KLAMPO242']['Val']  # 0: off, 1: on
+        self.main_feed_pump_3 = self.m['KLAMPO243']['Val']  # 0: off, 1: on
+        self.cond_pump_1 = self.m['KLAMPO181']['Val']  # 0: off, 1: on
+        self.cond_pump_2 = self.m['KLAMPO182']['Val']  # 0: off, 1: on
+        self.cond_pump_3 = self.m['KLAMPO183']['Val']  # 0: off, 1: on
+        #
+        self.ax_off = self.m['CAXOFF']['Val']
+        # Boron control
+        self.BoronConcen = self.m['KBCDO16']['Val']
+
+        self.BoronManMode = self.m['KLAMPO84']['Val']
+        self.BoronBorMode = self.m['KLAMPO84']['Val']
+        self.BoronAutMode = self.m['KLAMPO84']['Val']
+        self.BoronAILMode = self.m['KLAMPO84']['Val']
+        self.BoronDILMode = self.m['KLAMPO84']['Val']
+
+        self.BoronTank = self.m['EBOAC']['Val']
+        self.MakeTank  = self.m['EDEWT']['Val']
+
+        self.BoronValve = self.m['WBOAC']['Val']    # Max 2.5
+        self.BoronValveOpen = float(np.clip(self.BoronValve + 1, 0, 1))
+        self.BoronValveClose = float(np.clip(self.BoronValve - 1, 0, 1))
+
+        self.MakeUpValve = self.m['WDEWT']['Val']   # Max 10
+        self.MakeUpValveeOpen = float(np.clip(self.MakeUpValve + 1, 0, 10))
+        self.MakeUpValveClose = float(np.clip(self.MakeUpValve - 1, 0, 10))
+
+        # self.CDelt = self.m['TDELTA']['Val']
+        # self.PZRPres = self.m['ZINST65']['Val']
+        # self.PZRLevl = self.m['ZINST63']['Val']
+        # self.PZRTemp = self.m['UPRZ']['Val']
+        # self.ExitCoreT = self.m['UUPPPL']['Val']
 
         self.FV122 = self.m['BFV122']['Val']
         self.FV122M = self.m['KLAMPO95']['Val']
 
-        self.HV142 = self.m['BHV142']['Val']
-        self.HV142Flow = self.m['WRHRCVC']['Val']
-
-        self.PZRSprayPos = self.m['ZINST66']['Val']
-
-        self.LetdownSet = self.m['ZINST36']['Val']  # Letdown setpoint
-        self.LetdownSetM = self.m['KLAMPO89']['Val']  # Letdown setpoint Man0/Auto1
-
-        self.PZRBackUp = self.m['KLAMPO118']['Val']
-        self.PZRPropo = self.m['QPRZH']['Val']
+        # self.HV142 = self.m['BHV142']['Val']
+        # self.HV142Flow = self.m['WRHRCVC']['Val']
+        #
+        # self.PZRSprayPos = self.m['ZINST66']['Val']
+        #
+        # self.LetdownSet = self.m['ZINST36']['Val']  # Letdown setpoint
+        # self.LetdownSetM = self.m['KLAMPO89']['Val']  # Letdown setpoint Man0/Auto1
+        #
+        # self.PZRBackUp = self.m['KLAMPO118']['Val']
+        # self.PZRPropo = self.m['QPRZH']['Val']
 
         # Logic
         if self.CTIME == 0:
+            self.AllRodOut = False
+            self.BuxFix_ini = False
             self.StartRL = 1
+
+        # if self.AllRodOut == False:
+        self.Ref_P = 0.02
+        self.Ref_UpP = self.Ref_P + 0.01 # 2% + 1% -> 3%
+        self.Ref_UpDis = abs(self.Reactor_power - self.Ref_UpP)   # 0 ~ 0.01
+        self.Ref_DoP = self.Ref_P - 0.01 # 2% - 1% -> 1%
+        self.Ref_DoDis = abs(self.Reactor_power - self.Ref_DoP)     # 0 ~ 0.01
+        self.Out_Ref = True if (self.Ref_UpP - self.Reactor_power) < 0 \
+                               or (self.Reactor_power - self.Ref_DoP) < 0 else False
 
 
 class ENVCNS(CNS):
@@ -65,41 +145,28 @@ class ENVCNS(CNS):
         # RL -----------------------------------------------------------------------------------------------------------
         self.input_info = [
             # (para, x_round, x_min, x_max), (x_min=0, x_max=0 is not normalized.)
-            # ('BHV142',     1, 0,   0),       # Letdown(HV142)
-            # ('WRHRCVC',    1, 0,   0),       # RHR to CVCS Flow
-            # ('WNETLD',     1, 0,   10),      # Total Letdown Flow
-            # ('BFV122',     1, 0,   0),       # ChargingValve(FV122)
-            # ('WNETCH',     1, 0,   10),      # Total Charging Flow
-            # ('ZINST66',    1, 0,   30),      # PZR spray
-            ('ZINST65',    1, 0,   160),     # RCSPressure
-            ('ZINST63',    1, 0,   100),     # PZRLevel
-            # ('UUPPPL',     1, 0,   200),     # Core Exit Temperature
-            ('UPRZ',       1, 0,   300),     # PZR Temperature
-            # ('ZINST36',    1, 0,   0),       # Letdown Pressrue
+            ('QPROREL',     1,      0,      0),       # Reactor power
+            ('KBCDO22',     1000,   0,      0),       # MWe power
+            ('KBCDO20',     100,    0,      0),       # Load set point
+            ('UAVLEGM',     1000,   0,      0),       # T average
+            ('KBCDO10',     228,    0,      0),       # Rod Pos 0
+            ('KBCDO9',      228,    0,      0),       # Rod Pos 1
+            ('KBCDO8',      228,    0,      0),       # Rod Pos 2
+            ('KBCDO7',      228,    0,      0),       # Rod Pos 3
 
-            ('DSetPoint',  1, 0,   100),     # Pres-Setpoint
+            ('DRefPower',       1,      0,      0),         # Reference Power
+            ('DRefUpPower',     1,      0,      0),         # Reference Up Power
+            ('DRefDownPower',   1,      0,      0),         # Reference Down Power
 
-            # ('SetPres',    1, 0,   100),   # Pres-Setpoint
-            # ('SetLevel',   1, 0,   30),    # Level-Setpoint
-            # ('ErrPres',    1, 0,   100),   # RCSPressure - setpoint
-            # ('UpPres',     1, 0,   100),   # RCSPressure - Up
-            # ('DownPres',   1, 0,   100),   # RCSPressure - Down
-            # ('ErrLevel',   1, 0,   100),   # PZRLevel - setpoint
-            # ('UpLevel',    1, 0,   100),   # PZRLevel - Up
-            # ('DownLevel',  1, 0,   100),   # PZRLevel - Down
+            # ('DCurrent_t_ref',      1,    0,      0),       #
+            # ('DUpDeadBand',         1,    0,      0),       #
+            # ('DDownDeadBand',       1,    0,      0),       #
+            # ('DUpOperationBand',    1,    0,      0),       #
+            # ('DDownOperationBand',  1,    0,      0),       #
         ]
 
-        self.action_space = 2       # HV142, Spray, / Charging Valve
+        self.action_space = 1       # Boron
         self.observation_space = len(self.input_info) * self.time_leg
-        # -------------------------------------------------------------------------------------
-        # PID Part
-        self.PID_Mode = False
-        self.PID_Prs = PID(kp=0.03, ki=0.001, kd=1.0)
-        self.PID_Prs_S = PID(kp=0.03, ki=0.001, kd=1.0)
-        self.PID_Lev = PID(kp=0.03, ki=0.001, kd=1.0)
-        self.PID_Prs.SetPoint = 27.0  # Press set-point
-        self.PID_Prs_S.SetPoint = 27.0  # Press set-point
-        self.PID_Lev.SetPoint = 30.0  # Level set-point
         # -------------------------------------------------------------------------------------
 
     # ENV TOOLs ========================================================================================================
@@ -126,6 +193,22 @@ class ENVCNS(CNS):
             x = (x - x_min) / (x_max - x_min)
         return x
 
+    def get_t_ref(self):
+        # 평균온도에 기반한 출력 증가 알고리즘
+        # (290.2~308.2: 18도 증가) -> ( 2%~100%: 98% 증가 )
+        # 18 -> 98 따라서 1%증가시 요구되는 온도 증가량 18/98
+        # 1분당 1% 증가시 0.00306 도씩 초당 증가해야함.
+        # 2% start_ref_temp = 290.2 매틱 마다 0.00306 씩 증가
+        # increase_slop = 0.0001(5배에서 시간당 1%임).
+        #               = 0.001 (5배에서 시간당 10%?, 분당 약 0.46~0.5%, 0.085도/분) - Ver10
+        #               = 0.001 (5배에서 시간당 10%?, 분당 약 0.46~0.5%, ?도/분) - Ver11
+
+        increase_slop = 0.001489
+        start_2per_temp = 291.97
+        current_t_ref = start_2per_temp + (increase_slop) * self.CMem.CTIME
+
+        return current_t_ref, current_t_ref + 1, current_t_ref - 1, current_t_ref + 3, current_t_ref - 3
+
     # ENV RL TOOLs =====================================================================================================
     def get_state(self):
         state = []
@@ -133,11 +216,28 @@ class ENVCNS(CNS):
             if para in self.mem.keys():
                 _ = self.mem[para]['Val']
             else:
-                _ = self.PID_Prs.SetPoint if para == 'DSetPoint' else None
+                ctref, UpD, DownD, UpOp, DownOp = self.get_t_ref()
+
+                # _ = ctref if para == 'DCurrent_t_ref' else None
+                # _ = UpD if para == 'DUpDeadBand' else None
+                # _ = DownD if para == 'DDownDeadBand' else None
+                # _ = UpOp if para == 'DUpOperationBand' else None
+                # _ = DownOp if para == 'DDownOperationBand' else None
+
+                if para == 'DRefPower':
+                    _ = self.CMem.Ref_P
+                elif para == 'DRefUpPower':
+                    _ = self.CMem.Ref_UpP
+                elif para == 'DRefDownPower':
+                    _ = self.CMem.Ref_DoP
+                else:
+                    _ = None
+
                 # ------------------------------------------------------------------------------------------------------
                 if _ is None:
-                    raise ValueError(f'{para} is not in self.input_info')
+                    raise ValueError(f'{para} is not in self.input_info -> {_}')
                 # ------------------------------------------------------------------------------------------------------
+
             state.append(self.normalize(_, x_round, x_min, x_max))
         return np.array(state), state
 
@@ -148,47 +248,25 @@ class ENVCNS(CNS):
         """
         r, r_1, r_2, r_3, r_4, r_5 = 0, 0, 0, 0, 0, 0
         # --------------------------------------------------------------------------------------------------------------
-        # r_1] Cooling Rate 에 따라 온도 감소
-        def get_distance_r(curent_val, set_val, max_val, distance_normal):
-            r = 0
-            if curent_val - set_val == 0:
-                r += max_val
+        # r_1, 2] 현재 temperature 가 출력 기준 선보다 높아지거나, 낮아지면 거리만큼의 차가 보상으로 제공
+
+        ctref, UpD, DownD, UpOp, DownOp = self.get_t_ref()
+
+        if self.CMem.Tavg > ctref:
+            r_1 += (UpOp - self.CMem.Tavg) / 100
+        else:
+            r_1 += (self.CMem.Tavg - DownOp) / 100
+
+        if DownD <= self.CMem.Tavg <= UpD:
+            if self.CMem.Tavg > ctref:
+                r_2 += (UpD - self.CMem.Tavg) / 200
             else:
-                if curent_val > set_val:
-                    r += (distance_normal - (curent_val - set_val)) / distance_normal
-                else:
-                    r += (distance_normal - (- curent_val + set_val)) / distance_normal
-            r = np.clip(r, 0, max_val)
-            return r
+                r_2 += (self.CMem.Tavg - DownD) / 200
 
-        if self.CMem.PZRLevl >= 40:  # 기포 생성 이전
-            # 압력
-            #r_1 += get_distance_r(self.CMem.PZRPres, self.PID_Prs.SetPoint, max_val=1, distance_normal=10)
-            r_1 += - abs(self.CMem.PZRPres - self.PID_Prs.SetPoint)
-            # 수위
-            #r_2 += get_distance_r(self.CMem.PZRLevl, self.PID_Lev.SetPoint, max_val=1, distance_normal=70) / 20
-            # 제어
-            for i in [0, 1]:
-                if -0.3 <= A[i] < 0.3:
-                    pass
-                else:
-                    r_3 += - 1
+        # r_3] 출력 증가율에 따른 보상 선정
+        r_3 += min(self.CMem.Ref_UpDis, self.CMem.Ref_DoDis) * 100    # 경계에 가까워 지면 점점 보상이 0으로 감소함. [0, 1]
 
-        else:  # 기포 생성 이후
-            # 압력
-            r_1 += - abs(self.CMem.PZRPres - self.PID_Prs.SetPoint)
-            # 수위
-            r_2 += - abs(self.CMem.PZRLevl - self.PID_Lev.SetPoint)
-            # 제어
-            # if abs(A[0]) < 0.6 and abs(A[1]) < 0.6: c+= 0.05
-            # 제어
-            for i in [0, 1]:
-                if -0.3 <= A[i] < 0.3:
-                    pass
-                else:
-                    r_3 += - 1
-
-        r_w = [1 * r_1, 1 * r_2, 1 * r_3, 0 * r_4, 0 * r_5]
+        r_w = [0 * r_1, 0 * r_2, 1 * r_3, 0 * r_4, 0 * r_5]
         r = sum(r_w)
         # --------------------------------------------------------------------------------------------------------------
         self.Loger_txt += f'R|{r}|{r_1}|{r_2}|{r_3}|{r_4}|{r_5}|'
@@ -196,32 +274,27 @@ class ENVCNS(CNS):
 
     def get_done(self, r, AMod):
         d, ep_d = False, False
-        cond = {
-            1: True if 176 < self.CMem.ExitCoreT else False,
+        ctref, UpD, DownD, UpOp, DownOp = self.get_t_ref()
 
-            2: True if abs(self.CMem.PZRPres - self.PID_Prs.SetPoint) >= 10 else False,  # 목표 set-point 보다 10만큼 크면 종료
-            3: True if self.CMem.PZRLevl <= 25 else False,
-            4: True if self.CMem.CTIME > 550 * 50 and self.CMem.PZRLevl > 98 else False,
-            5: True if 28 <= self.CMem.PZRLevl <= 32 else False,
-            6: True if 28 <= self.CMem.PZRPres <= 32 else False,
+        cond = {
+            1: True if self.CMem.Tavg < DownOp else False,
+            2: True if UpOp < self.CMem.Tavg else False,
+
+            3: self.CMem.Out_Ref,
+            4: self.CMem.AllRodOut,
         }
         # --------------------------------------------------------------------------------------------------------------
         # 1] 불만족시 즉각 Done
-        if cond[1]:
-            # 에피소드 종료 조건 도달
-            if cond[5] and cond[6]:
-                # 에피소드 종료 조건에 도달하였고, 목표하는 범위내에 존재하는 경우 done 은 false 이므로 이를 고려하여 mask 설계
+        if cond[4]:
+            # 계속 진행
+            if cond[3]:
+                d = True
+            else:
                 ep_d = True
-            else:
-                # 에피소드의 종료 조건에 도달하였으나, 목표하는 범위내에 존재하지 않음.
-                d = True
         else:
-            # 에피소드 진행중 ..
-            if cond[2] or cond[3] or cond[4]:
-                # 이중 하나라도 걸리면 에피소드 종료
+            if cond[3]:
                 d = True
             else:
-                # 계속 진행 ...
                 pass
         # --------------------------------------------------------------------------------------------------------------
         if d: print(cond)
@@ -242,7 +315,6 @@ class ENVCNS(CNS):
         :param A: A 액션 [0, 0, 0] <- act space 에 따라서
         :return: AMod: 수정된 액션
         """
-        AMod = A
         ActOrderBook = {
             # Charging Valve
             'ChargingValveMan': (['KSWO100'], [1]), 'ChargingValveAUto': (['KSWO100'], [0]),
@@ -276,7 +348,38 @@ class ENVCNS(CNS):
             'PZRSprayStay': (['KSWO126', 'KSWO127'], [0, 0]),
             # 'PZRSprayClose': (['BPRZSP'], [self.mem['BPRZSP']['Val'] + 0.015 * -1]),
             'PZRSprayClose': (['KSWO126', 'KSWO127'], [1, 0]),
-            # Delta Time
+
+            # MainFeedWaterValve
+            'MFW_ValveAuto': (['KSWO171', 'KSWO165', 'KSWO159'], [0, 0, 0]),
+
+            # Rod Control ----------------------------------------------------------------------------------------------
+            'RodOut':  (['KSWO33', 'KSWO32'], [1, 0]),
+            'RodStay': (['KSWO33', 'KSWO32'], [0, 0]),
+            'RodIn':   (['KSWO33', 'KSWO32'], [0, 1]),
+
+            # Boron Control --------------------------------------------------------------------------------------------
+            # 1] Make-up 주입
+            #    1. ALT DIL 로 모드 전환
+            #    2. WDEWT로 밸브 개도 전환
+
+            'BoronManMode': (['KSWO74'], [1]),
+            'BoronBorMode': (['KSWO75'], [1]),
+            'BoronAutMode': (['KSWO76'], [1]),
+            'BoronAILMode': (['KSWO77'], [1]),
+            'BoronDILMode': (['KSWO78'], [1]),
+
+            'FillBoron': (['EBOAC'], [10000]),
+            'FillMakeup': (['EDEWT'], [10000]),
+
+            'BoronValveOpen': (['WBOAC'], [self.CMem.BoronValveOpen]),
+            'BoronValveClose': (['WBOAC'], [self.CMem.BoronValveClose]),
+            'BoronMakeUpOpen': (['WDEWT'], [self.CMem.MakeUpValveeOpen]),
+            'BoronMakeUpClose': (['WDEWT'], [self.CMem.MakeUpValveClose]),
+
+            'BoronValvesReset': (['WBOAC', 'WDEWT'], [0, 0]),
+
+            'BugFix1': (['KSWO86'], [0]),
+            # Delta Time -----------------------------------------------------------------------------------------------
             'ChangeDelta': (['TDELTA'], [1.0]),
 
             # # ETC
@@ -319,6 +422,7 @@ class ENVCNS(CNS):
             # 'OpenSI': (['KSWO81', 'KSWO82'], [1, 0]), 'CloseSI': (['KSWO81', 'KSWO82'], [0, 1]),
 
         }
+        AMod = A
         # Action Logger ------------------------------------------------------------------------------------------------
         cr_time = time.strftime('%c', time.localtime(time.time()))
         self.a_log = ''
@@ -328,145 +432,47 @@ class ENVCNS(CNS):
         # --------------------------------------------------------------------------------------------------------------
         a_log_f(s=f'[Step|{self.ENVStep:10}][{"="*20}]')
 
-        # 0] Delta time 빠르게 ...
-        if self.CMem.CDelt != 1:
-            self._send_control_save(ActOrderBook['ChangeDelta'])
-            a_log_f(s=f'ChangeDelta [{self.CMem.CDelt}]')
-        # 1] BackUp/Proportion Heater On
-        if self.CMem.PZRBackUp != 0:
-            self._send_control_save(ActOrderBook['PZRBackHeaterOn'])
-            a_log_f(s=f'PZR Backup [{self.CMem.PZRBackUp}] On')
-        if self.CMem.PZRPropo != 1:
-            self._send_control_save(ActOrderBook['PZRProHeaterUp'])
-            a_log_f(s=f'PZR Proportion heater [{self.CMem.PZRPropo}] Increase')
+        # 0] Bug fix : 17번 조건 초기 조건 재설정
+        if self.CMem.BuxFix_ini == False:
+            self._send_control_save(ActOrderBook['BugFix1'])            # 보론 밸브 고장 수정
+            self._send_control_save(ActOrderBook['FillBoron'])          # 보론 탱크 물 0 -> 10000
+            self._send_control_save(ActOrderBook['BoronValvesReset'])   # 보론/Make-up 주입 Valve pos Reset
+            a_log_f(s=f'[{"Common":10}] Fix Ini Bugs')
+            self.CMem.BuxFix_ini = True
+        else:
+            # 0] 주급수 및 CVCS 자동으로 전환
+            if self.CMem.FV122M == 1:
+                self._send_control_save(ActOrderBook['ChargingValveAUto'])
+                a_log_f(s=f'[{"Common":10}] ChargingValveAUto [{self.CMem.FV122M}]')
+            if self.CMem.main_feed_valves_state != 0:
+                self._send_control_save(ActOrderBook['MFW_ValveAuto'])
+                a_log_f(s=f'[{"Common":10}] MFW_ValveAuto [{self.CMem.main_feed_valves_state}]')
 
-        # 2] Core
-        if self.CMem.PZRLevl >= 99:  # 가압기 기포 생성 이전
-            self.PID_Prs.SetPoint = 27
-            # ----------------------------- PRESS -------------------------------------------------
-            if self.PID_Mode:
-                PID_out = self.PID_Prs.update(self.CMem.PZRPres, 1)
-                if PID_out >= 0.005:
-                    self._send_control_save(ActOrderBook['LetdownValveClose'])
-                elif -0.005 < PID_out < 0.005:
-                    self._send_control_save(ActOrderBook['LetdownValveStay'])
+            # 1] All Rod Out 이전 2% 내 보론 농도 조절 -------------------------------------------------------------------
+            if self.CMem.AllRodOut == False:
+                """
+                목표
+                - 일정 간격으로 제어봉 인출
+                - 제어봉 인출에 따른 출력 증가를 보론 주입을 통해 감쇄
+                """
+                # 1-1] 일정 간격으로 제어봉 인출
+                if self.ENVStep % 10 == 0: # 매 3 ENVStep * tick 마다 제어봉 증가
+                    self._send_control_save(ActOrderBook['RodOut'])
+                    a_log_f(s=f'[{"NoRodOut":10}] '
+                              f'Rod Out ['
+                              f'{self.CMem.rod_pos[0]:4}|'
+                              f'{self.CMem.rod_pos[1]:4}|'
+                              f'{self.CMem.rod_pos[2]:4}|'
+                              f'{self.CMem.rod_pos[3]:4}]')
+                # 1-2] 제어봉 인출에 따른 출력 증가를 보론 주입을 통해 감쇄
+                # Boron Valve ------------------------------------------------------------------------------------------
+                if AMod[0] < 0:
+                    # Inject
+                    self._send_control_save(ActOrderBook['BoronValveOpen'])
+                    a_log_f(s=f'[{"NoRodOut":10}] BoronValveOpen')
                 else:
-                    self._send_control_save(ActOrderBook['LetdownValveOpen'])
-            else:
-                # A[0] HV142 / Spray
-                if AMod[0] < -0.3:
-                    # Decrease
-                    self._send_control_save(ActOrderBook['LetdownValveClose'])
-                    a_log_f(s=f'[{"Bubble X":10}]LetdownValveClose')
-                elif -0.3 <= AMod[0] < 0.3:
                     # Stay
-                    self._send_control_save(ActOrderBook['LetdownValveStay'])
-                    a_log_f(s=f'[{"Bubble X":10}]LetdownValveStay')
-                elif 0.3 <= AMod[0]:
-                    # Increase
-                    self._send_control_save(ActOrderBook['LetdownValveOpen'])
-                    a_log_f(s=f'[{"Bubble X":10}]LetdownValveOpen')
-
-            # ----------------------------- Level -------------------------------------------------
-            if self.PID_Mode:
-                PID_out = self.PID_Lev.update(self.CMem.PZRLevl, 1)
-                # if PID_out >= 0.005:
-                #     self._send_control_save(ActOrderBook['ChargingValveOpen'])
-                # elif -0.005 < PID_out < 0.005:
-                #     self._send_control_save(ActOrderBook['ChargingValveStay'])
-                # else:
-                #     self._send_control_save(ActOrderBook['ChargingValveClose'])
-            else:
-                # A[1] FV122
-                pass
-            # ----------------------------- ----- -------------------------------------------------
-        else:  # 가압기 기포 생성 이후
-            self.PID_Prs.SetPoint = 30
-            self.PID_Prs_S.SetPoint = 30
-            self.PID_Lev.SetPoint = 30
-            # ----------------------------- PRESS -------------------------------------------------
-            if self.PID_Mode:
-                # HV142 ----------------------------------------------------------
-                PID_out = self.PID_Prs.update(self.CMem.PZRPres, 1)
-
-                if self.CMem.HV142 != 0:
-                    self._send_control_save(ActOrderBook['LetdownValveClose'])
-                    a_log_f(s=f'[{"Bubble O":10}]LetdownValveClose')
-
-                # if PID_out >= 0.005:
-                #     self._send_control_save(ActOrderBook['LetdownValveClose'])
-                # elif -0.005 < PID_out < 0.005:
-                #     self._send_control_save(ActOrderBook['LetdownValveStay'])
-                # else:
-                #     self._send_control_save(ActOrderBook['LetdownValveOpen'])
-
-                # Spray ----------------------------------------------------------
-                PID_out = self.PID_Prs_S.update(self.CMem.PZRPres, 1)
-                if PID_out >= 0.005:
-                    self._send_control_save(ActOrderBook['PZRSprayClose'])
-                elif -0.005 < PID_out < 0.005:
-                    self._send_control_save(ActOrderBook['PZRSprayStay'])
-                else:
-                    self._send_control_save(ActOrderBook['PZRSprayOpen'])
-                # LetPress ----------------------------------------------------------
-                if self.CMem.LetdownSetM == 1:
-                    self._send_control_save(ActOrderBook['LetdownPresSetA'])
-
-                # print(f'GetPoint|{self.CMem.PZRPres}, {self.CMem.PZRPres}|\n'
-                #       f'LetdownPos:{self.CMem.HV142}:{self.CMem.HV142Flow}|'
-                #       f'PZRSpray:{self.CMem.PZRSprayPos}|{PID_out}')
-            else:
-                # HV142 ----------------------------------------------------------
-                # A[0] HV142
-                # AMod[0] = -1
-                if self.CMem.HV142 != 0:
-                    self._send_control_save(ActOrderBook['LetdownValveClose'])
-                    a_log_f(s=f'[{"Bubble O":10}]LetdownValveClose')
-
-                # Spray ----------------------------------------------------------
-                # A[0] HV142 / Spray
-                if AMod[0] < -0.3:
-                    # Decrease
-                    self._send_control_save(ActOrderBook['PZRSprayClose'])
-                    a_log_f(s=f'[{"Bubble X":10}]PZRSprayClose')
-                elif -0.3 <= AMod[0] < 0.3:
-                    # Stay
-                    self._send_control_save(ActOrderBook['PZRSprayStay'])
-                    a_log_f(s=f'[{"Bubble X":10}]PZRSprayStay')
-                elif 0.3 <= AMod[0]:
-                    # Increase
-                    self._send_control_save(ActOrderBook['PZRSprayOpen'])
-                    a_log_f(s=f'[{"Bubble X":10}]PZRSprayOpen')
-
-                # LetPress ----------------------------------------------------------
-                if self.CMem.LetdownSetM == 1:
-                    self._send_control_save(ActOrderBook['LetdownPresSetA'])
-                    a_log_f(s=f'[{"Bubble X":10}]LetdownPresSetA')
-
-            # ----------------------------- Level -------------------------------------------------
-            if self.PID_Mode:
-                PID_out = self.PID_Lev.update(self.CMem.PZRLevl, 1)
-                if PID_out >= 0.005:
-                    self._send_control_save(ActOrderBook['ChargingValveOpen'])
-                elif -0.005 < PID_out < 0.005:
-                    self._send_control_save(ActOrderBook['ChargingValveStay'])
-                else:
-                    self._send_control_save(ActOrderBook['ChargingValveClose'])
-            else:
-                # A[2] FV122
-                if AMod[1] < -0.3:
-                    # Decrease
-                    self._send_control_save(ActOrderBook['ChargingValveClose'])
-                    a_log_f(s=f'[{"Bubble O":10}]ChargingValveClose')
-                elif -0.3 <= AMod[1] < 0.3:
-                    # Stay
-                    self._send_control_save(ActOrderBook['ChargingValveStay'])
-                    a_log_f(s=f'[{"Bubble O":10}]ChargingValveStay')
-                elif 0.3 <= AMod[1]:
-                    # Increase
-                    self._send_control_save(ActOrderBook['ChargingValveOpen'])
-                    a_log_f(s=f'[{"Bubble O":10}]PZRSprayOpen')
-
+                    a_log_f(s=f'[{"NoRodOut":10}] BoronValveStay')
         # Action Logger Save -------------------------------------------------------------------------------------------
         with open(f'./{self.ActLoggerPath}/Act_{self.Name}.txt', 'a') as f:
             # Action log
@@ -487,7 +493,7 @@ class ENVCNS(CNS):
         AMod = self.send_act(A)                                             # [a(t)]
         self.Loger_txt += f'A|{A}|AMod|{AMod}'                              #
 
-        self.want_tick = int(100)
+        self.want_tick = int(295)
 
         # New Data (time t+1) -------------------------------------
         super(ENVCNS, self).step()                  # 전체 CNS mem run-Freeze 하고 mem 업데이트
@@ -504,11 +510,21 @@ class ENVCNS(CNS):
         self.ENVlogging(s=self.Loger_txt)
         self.state_txt = next_state_list                                    # [s(t) <- s(t+1)]
         self.Loger_txt = ''
+
+        # 벨브 Pos 초기화
+        self.want_tick = int(5)
+        super(ENVCNS, self).step()  # 전체 CNS mem run-Freeze 하고 mem 업데이트
+        self.CMem.update()  # 선택 변수 mem 업데이트
+
+        self._append_val_to_list()
+
+        self._send_control_save((['WBOAC', 'WDEWT'], [0, 0]))
+        self._send_control_to_cns()
         return next_state, reward, done, ep_done, AMod
 
     def reset(self, file_name, current_ep):
         # 1] CNS 상태 초기화 및 초기화된 정보 메모리에 업데이트
-        super(ENVCNS, self).reset(initial_nub=21, mal=False, mal_case=0, mal_opt=0, mal_time=0, file_name=file_name)
+        super(ENVCNS, self).reset(initial_nub=17, mal=False, mal_case=0, mal_opt=0, mal_time=0, file_name=file_name)
         # 2] 업데이트된 'Val' 를 'List' 에 추가 및 ENVLogging 초기화
         self._append_val_to_list()
         # 3] 'Val' 을 상태로 제작후 반환

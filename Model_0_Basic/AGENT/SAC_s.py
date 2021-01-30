@@ -223,7 +223,7 @@ class SAC(SAC_Base):
 
                         # self.replay_buffer.add_train_info(critic_1_loss, critic_2_loss, p_loss, ent_loss, alpha)
 
-                next_state, reward, done, AMod = self.env.step(A=action)
+                next_state, reward, done, ep_done, AMod = self.env.step(A=action)
                 # ------------------------------------------------------------------------------------------------------
                 ep_steps += 1
                 ep_reward += reward
@@ -270,7 +270,7 @@ class SAC(SAC_Base):
 
                         # self.replay_buffer.add_train_info(critic_1_loss, critic_2_loss, p_loss, ent_loss, alpha)
 
-                next_state, reward, done, AMod = self.env.step(A=action)
+                next_state, reward, done, ep_done, AMod = self.env.step(A=action)
                 # ------------------------------------------------------------------------------------------------------
                 ep_steps += 1
                 ep_reward += reward

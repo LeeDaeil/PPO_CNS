@@ -51,15 +51,18 @@ class BoardUI(QWidget):
         #             count_gp_nub += 1
 
         self.fig = plt.Figure()
-        required_row = 4
+        required_row = 6
         required_col = 2
         gs = GridSpec(required_row, required_col, figure=self.fig)
 
         self.axs = [
             self.fig.add_subplot(gs[0, :]),  # 에이전트 누적 Reward
-            self.fig.add_subplot(gs[1, :]),  # 현재 CoreExitTemp / PzrTemp
-            self.fig.add_subplot(gs[2, :]),  # 현재 PZR Pres / level
-            self.fig.add_subplot(gs[3, :]),  # 현재 Letdown pos/ charging pos/ Pzr spray pos
+            self.fig.add_subplot(gs[1, :]),  # 현재 출력과 Up/Down 범위
+            self.fig.add_subplot(gs[2, :]),  # 현재 제어봉 Pos
+            self.fig.add_subplot(gs[3, :]),  # 현재 보론 탱크
+
+            self.fig.add_subplot(gs[4, :]),  # 현재 보론 농도
+            self.fig.add_subplot(gs[5, :]),  # 현재 보론 벨브
         ]
 
         self.fig.set_tight_layout(True)
@@ -137,21 +140,29 @@ class Board(BoardUI):
         timer.start()
 
     def update_plot(self):
-        KCNTOMS, UUPPPL, UPRZ, ZINST65, ZINST63, BHV142, BFV122, ZINST66, Reward = self.replay_buffer.get_para(f'{self.selected_nub}')
+        KCNTOMS, QPROREL, Ref_P, Ref_UpP, Ref_DoP, rod_pos1, rod_pos2, rod_pos3, rod_pos4, EBOAC, KBCDO16, WBOAC, \
+        Reward = self.replay_buffer.get_para(f'{self.selected_nub}')
+
         _ = [ax.clear() for ax in self.axs]
 
         if len(KCNTOMS) > 1:
             self.axs[0].plot(Reward, label='R')  # Reward
 
-            self.axs[1].plot(KCNTOMS, UUPPPL, label='CoreExitTemp')
-            self.axs[1].plot(KCNTOMS, UPRZ, label='PzrTemp')
+            self.axs[1].plot(KCNTOMS, QPROREL, label='Reactor Power')
+            self.axs[1].plot(KCNTOMS, Ref_P, label='Ref_P')
+            self.axs[1].plot(KCNTOMS, Ref_UpP, label='Ref_UpP')
+            self.axs[1].plot(KCNTOMS, Ref_DoP, label='Ref_DoP')
 
-            self.axs[2].plot(KCNTOMS, ZINST65, label='PZR Pres')
-            self.axs[2].plot(KCNTOMS, ZINST63, label='PZR Level')
+            self.axs[2].plot(KCNTOMS, rod_pos1, label='rod_pos1')
+            self.axs[2].plot(KCNTOMS, rod_pos2, label='rod_pos2')
+            self.axs[2].plot(KCNTOMS, rod_pos3, label='rod_pos3')
+            self.axs[2].plot(KCNTOMS, rod_pos4, label='rod_pos4')
 
-            self.axs[3].plot(KCNTOMS, BHV142, label='Letdown Pos')
-            self.axs[3].plot(KCNTOMS, BFV122, label='Charging Pos')
-            self.axs[3].plot(KCNTOMS, [_/31 for _ in ZINST66], label='PZR Spray Pos')
+            self.axs[3].plot(KCNTOMS, EBOAC, label='Boron Tank')
+
+            self.axs[4].plot(KCNTOMS, KBCDO16, label='Boron Concentration')
+
+            self.axs[5].plot(KCNTOMS, WBOAC, label='Boron Valve')
 
             for ax in self.axs:
                 ax.legend()

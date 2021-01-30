@@ -6,13 +6,13 @@ from FolderManger import Folder_Manager
 from multiprocessing.managers import BaseManager
 from multiprocessing import Process
 
-from Model_1_Emergency.TOOL.Replay import ReplayMemory
-from Model_1_Emergency.AGENT.SAC_m import SAC as SAC_master
-from Model_1_Emergency.AGENT.SAC_s import SAC as SAC_slave
-from Model_1_Emergency.AGENT.Networks import QNetwork, GaussianPolicy, DeterministicPolicy
+from Model_3_Start_up_Power.TOOL.Replay import ReplayMemory
+from Model_3_Start_up_Power.AGENT.SAC_m import SAC as SAC_master
+from Model_3_Start_up_Power.AGENT.SAC_s import SAC as SAC_slave
+from Model_3_Start_up_Power.AGENT.Networks import QNetwork, GaussianPolicy, DeterministicPolicy
 
-from Model_1_Emergency.ENVS.CNS_Env_Em import ENVCNS
-from Model_1_Emergency.TOOL.PARAMonitoringBoard import ParaBoard
+from Model_3_Start_up_Power.ENVS.CNS_Env_Start_up_Power import ENVCNS
+from Model_3_Start_up_Power.TOOL.PARAMonitoringBoard import ParaBoard
 
 
 if __name__ == '__main__':

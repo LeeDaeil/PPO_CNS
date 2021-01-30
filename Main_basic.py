@@ -68,7 +68,6 @@ if __name__ == '__main__':
         sh_critic.share_memory()
         sh_critic_opt.share_memory()
         sh_target.share_memory()
-
         sh_policy.share_memory()
 
         sh_net = {
