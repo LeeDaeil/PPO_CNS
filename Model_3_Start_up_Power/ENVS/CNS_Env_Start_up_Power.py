@@ -119,6 +119,8 @@ class CMem:
         self.Ref_DoDis = abs(self.Reactor_power - self.Ref_DoP)     # 0 ~ 0.01
         self.Out_Ref = True if (self.Ref_UpP - self.Reactor_power) < 0 \
                                or (self.Reactor_power - self.Ref_DoP) < 0 else False
+        self.Out_Ref_Up = True if (self.Ref_UpP - self.Reactor_power) < 0 else False
+        self.Out_Ref_Do = True if (self.Reactor_power - self.Ref_DoP) < 0 else False
 
 
 class ENVCNS(CNS):
@@ -156,7 +158,9 @@ class ENVCNS(CNS):
 
             ('DRefPower',       1,      0,      0),         # Reference Power
             ('DRefUpPower',     1,      0,      0),         # Reference Up Power
+            ('DRefUpDis',       1,      0,      0),         # Reference Up Dis Power
             ('DRefDownPower',   1,      0,      0),         # Reference Down Power
+            ('DRefDownDis',     1,      0,      0),           # Reference Down Dis Power
 
             # ('DCurrent_t_ref',      1,    0,      0),       #
             # ('DUpDeadBand',         1,    0,      0),       #
@@ -230,6 +234,10 @@ class ENVCNS(CNS):
                     _ = self.CMem.Ref_UpP
                 elif para == 'DRefDownPower':
                     _ = self.CMem.Ref_DoP
+                elif para == 'DRefUpDis':
+                    _ = self.CMem.Ref_UpDis
+                elif para == 'DRefDownDis':
+                    _ = self.CMem.Ref_DoDis
                 else:
                     _ = None
 
@@ -282,6 +290,9 @@ class ENVCNS(CNS):
 
             3: self.CMem.Out_Ref,
             4: self.CMem.AllRodOut,
+
+            5: self.CMem.Out_Ref_Do,
+            6: self.CMem.Out_Ref_Up,
         }
         # --------------------------------------------------------------------------------------------------------------
         # 1] 불만족시 즉각 Done
