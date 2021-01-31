@@ -169,7 +169,7 @@ class ENVCNS(CNS):
             # ('DDownOperationBand',  1,    0,      0),       #
         ]
 
-        self.action_space = 1       # Boron
+        self.action_space = 2       # Boron, 제어봉
         self.observation_space = len(self.input_info) * self.time_leg
         # -------------------------------------------------------------------------------------
 
@@ -467,14 +467,15 @@ class ENVCNS(CNS):
                 - 제어봉 인출에 따른 출력 증가를 보론 주입을 통해 감쇄
                 """
                 # 1-1] 일정 간격으로 제어봉 인출
-                if self.ENVStep % 10 == 0: # 매 3 ENVStep * tick 마다 제어봉 증가
-                    self._send_control_save(ActOrderBook['RodOut'])
-                    a_log_f(s=f'[{"NoRodOut":10}] '
-                              f'Rod Out ['
-                              f'{self.CMem.rod_pos[0]:4}|'
-                              f'{self.CMem.rod_pos[1]:4}|'
-                              f'{self.CMem.rod_pos[2]:4}|'
-                              f'{self.CMem.rod_pos[3]:4}]')
+                # if self.ENVStep % 10 == 0: # 매 3 ENVStep * tick 마다 제어봉 증가
+                #     self._send_control_save(ActOrderBook['RodOut'])
+                #     a_log_f(s=f'[{"NoRodOut":10}] '
+                #               f'Rod Out ['
+                #               f'{self.CMem.rod_pos[0]:4}|'
+                #               f'{self.CMem.rod_pos[1]:4}|'
+                #               f'{self.CMem.rod_pos[2]:4}|'
+                #               f'{self.CMem.rod_pos[3]:4}]')
+
                 # 1-2] 제어봉 인출에 따른 출력 증가를 보론 주입을 통해 감쇄
                 # Boron Valve ------------------------------------------------------------------------------------------
                 if AMod[0] < 0:
@@ -484,6 +485,19 @@ class ENVCNS(CNS):
                 else:
                     # Stay
                     a_log_f(s=f'[{"NoRodOut":10}] BoronValveStay')
+                # 제어봉 제어
+                if AMod[1] < 0:
+                    # Inject
+                    self._send_control_save(ActOrderBook['RodOut'])
+                else:
+                    # Stay
+                    pass
+                a_log_f(s=f'[{"NoRodOut":10}] '
+                          f'Rod Out ['
+                          f'{self.CMem.rod_pos[0]:4}|'
+                          f'{self.CMem.rod_pos[1]:4}|'
+                          f'{self.CMem.rod_pos[2]:4}|'
+                          f'{self.CMem.rod_pos[3]:4}]')
         # Action Logger Save -------------------------------------------------------------------------------------------
         with open(f'./{self.ActLoggerPath}/Act_{self.Name}.txt', 'a') as f:
             # Action log
