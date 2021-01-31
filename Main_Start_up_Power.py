@@ -30,7 +30,7 @@ if __name__ == '__main__':
     print(f'[{"CNS Info":20}][Nub_env|{len(CNS_info):5}]')
     [print(f'[{"CNS Info_IP/PORT":20}][Info|{i:3}_{CNS_info[i]}]') for i in range(len(CNS_info))]
     # Initial Set-up ---------------------------------------------------------------------------------------------------
-    lr = 0.0003
+    lr = 0.00003
     policy_type = "Gaussian"
     automatic_entropy_tuning = False
     print(f'[{"Initial Set-up":20}]'

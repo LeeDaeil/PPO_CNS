@@ -246,7 +246,7 @@ class SAC(SAC_Base):
                     # 종료 조건 섹션 -------------------------------------------------------------------------------------
                     mask = 1 if ep_done else float(not done)
                     # --------------------------------------------------------------------------------------------------
-                    self.replay_buffer.push(state, action, reward, next_state, mask)
+                    self.replay_buffer.push(state, AMod, reward, next_state, mask)
                     state = next_state
 
                     # print(self.p_info + f'[W][ep_nub|{ep_nub:10}][ep_steps|{ep_steps:10}]'

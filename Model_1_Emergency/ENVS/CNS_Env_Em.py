@@ -283,7 +283,7 @@ class ENVCNS(CNS):
         :param A: A 액션 [0, 0, 0] <- act space 에 따라서
         :return: AMod: 수정된 액션
         """
-        AMod = A
+        AMod = list(A)
         ActOrderBook = {
             'StopAllRCP': (['KSWO132', 'KSWO133', 'KSWO134'], [0, 0, 0]),
             'StopRCP1': (['KSWO132'], [0]),
@@ -504,7 +504,7 @@ class ENVCNS(CNS):
             f.write(f'{self.a_log}')
         # Done Act -----------------------------------------------------------------------------------------------------
         self._send_control_to_cns()
-        return AMod
+        return np.array(AMod)
 
     # ENV Main TOOLs ===================================================================================================
     def step(self, A):

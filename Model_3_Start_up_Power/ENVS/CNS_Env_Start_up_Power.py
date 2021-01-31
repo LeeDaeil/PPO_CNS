@@ -78,14 +78,14 @@ class CMem:
         self.MakeTank  = self.m['EDEWT']['Val']
 
         self.BoronValve = self.m['WBOAC']['Val']    # Max 2.5
-        self.BoronValveOpen = float(np.clip(self.BoronValve + 1, 0, 1))
-        self.BoronValveClose = float(np.clip(self.BoronValve - 1, 0, 1))
+        self.BoronValveOpen = float(np.clip(0.1, 0, 1))
+        self.BoronValveClose = float(np.clip(self.BoronValve - 0.1, 0, 1))
 
         self.MakeUpValve = self.m['WDEWT']['Val']   # Max 10
         self.MakeUpValveeOpen = float(np.clip(self.MakeUpValve + 1, 0, 10))
         self.MakeUpValveClose = float(np.clip(self.MakeUpValve - 1, 0, 10))
 
-        # self.CDelt = self.m['TDELTA']['Val']
+        self.CDelt = self.m['TDELTA']['Val']
         # self.PZRPres = self.m['ZINST65']['Val']
         # self.PZRLevl = self.m['ZINST63']['Val']
         # self.PZRTemp = self.m['UPRZ']['Val']
@@ -113,9 +113,9 @@ class CMem:
 
         # if self.AllRodOut == False:
         self.Ref_P = 0.02
-        self.Ref_UpP = self.Ref_P + 0.01 # 2% + 1% -> 3%
+        self.Ref_UpP = self.Ref_P + 0.015 # 2% + 1% -> 3%
         self.Ref_UpDis = abs(self.Reactor_power - self.Ref_UpP)   # 0 ~ 0.01
-        self.Ref_DoP = self.Ref_P - 0.01 # 2% - 1% -> 1%
+        self.Ref_DoP = self.Ref_P - 0.015 # 2% - 1% -> 1%
         self.Ref_DoDis = abs(self.Reactor_power - self.Ref_DoP)     # 0 ~ 0.01
         self.Out_Ref = True if (self.Ref_UpP - self.Reactor_power) < 0 \
                                or (self.Reactor_power - self.Ref_DoP) < 0 else False
@@ -148,19 +148,20 @@ class ENVCNS(CNS):
         self.input_info = [
             # (para, x_round, x_min, x_max), (x_min=0, x_max=0 is not normalized.)
             ('QPROREL',     1,      0,      0),       # Reactor power
-            ('KBCDO22',     1000,   0,      0),       # MWe power
-            ('KBCDO20',     100,    0,      0),       # Load set point
-            ('UAVLEGM',     1000,   0,      0),       # T average
+            ('KBCDO16',     1000,      0,      0),       # Reactor power
+            # ('KBCDO22',     1000,   0,      0),       # MWe power
+            # ('KBCDO20',     100,    0,      0),       # Load set point
+            # ('UAVLEGM',     1000,   0,      0),       # T average
             ('KBCDO10',     228,    0,      0),       # Rod Pos 0
             ('KBCDO9',      228,    0,      0),       # Rod Pos 1
             ('KBCDO8',      228,    0,      0),       # Rod Pos 2
             ('KBCDO7',      228,    0,      0),       # Rod Pos 3
 
-            ('DRefPower',       1,      0,      0),         # Reference Power
-            ('DRefUpPower',     1,      0,      0),         # Reference Up Power
-            ('DRefUpDis',       1,      0,      0),         # Reference Up Dis Power
-            ('DRefDownPower',   1,      0,      0),         # Reference Down Power
-            ('DRefDownDis',     1,      0,      0),           # Reference Down Dis Power
+            # ('DRefPower',       1,      0,      0),         # Reference Power
+            # ('DRefUpPower',     1,      0,      0),         # Reference Up Power
+            ('DRefUpDis',       0.1,      0,      0),         # Reference Up Dis Power
+            # ('DRefDownPower',   1,      0,      0),         # Reference Down Power
+            ('DRefDownDis',     0.1,      0,      0),           # Reference Down Dis Power
 
             # ('DCurrent_t_ref',      1,    0,      0),       #
             # ('DUpDeadBand',         1,    0,      0),       #
@@ -169,7 +170,7 @@ class ENVCNS(CNS):
             # ('DDownOperationBand',  1,    0,      0),       #
         ]
 
-        self.action_space = 2       # Boron, 제어봉
+        self.action_space = 1       # Boron, 제어봉
         self.observation_space = len(self.input_info) * self.time_leg
         # -------------------------------------------------------------------------------------
 
@@ -433,7 +434,7 @@ class ENVCNS(CNS):
             # 'OpenSI': (['KSWO81', 'KSWO82'], [1, 0]), 'CloseSI': (['KSWO81', 'KSWO82'], [0, 1]),
 
         }
-        AMod = A
+        AMod = list(A)
         # Action Logger ------------------------------------------------------------------------------------------------
         cr_time = time.strftime('%c', time.localtime(time.time()))
         self.a_log = ''
@@ -442,6 +443,11 @@ class ENVCNS(CNS):
             self.a_log += f'[{cr_time}]|[{self.Mother_current_ep:06}]\t|{s}\n'
         # --------------------------------------------------------------------------------------------------------------
         a_log_f(s=f'[Step|{self.ENVStep:10}][{"="*20}]')
+
+        # 0] Delta time 빠르게 ...
+        if self.CMem.CDelt != 1:
+            self._send_control_save(ActOrderBook['ChangeDelta'])
+            a_log_f(s=f'ChangeDelta [{self.CMem.CDelt}]')
 
         # 0] Bug fix : 17번 조건 초기 조건 재설정
         if self.CMem.BuxFix_ini == False:
@@ -467,14 +473,14 @@ class ENVCNS(CNS):
                 - 제어봉 인출에 따른 출력 증가를 보론 주입을 통해 감쇄
                 """
                 # 1-1] 일정 간격으로 제어봉 인출
-                # if self.ENVStep % 10 == 0: # 매 3 ENVStep * tick 마다 제어봉 증가
-                #     self._send_control_save(ActOrderBook['RodOut'])
-                #     a_log_f(s=f'[{"NoRodOut":10}] '
-                #               f'Rod Out ['
-                #               f'{self.CMem.rod_pos[0]:4}|'
-                #               f'{self.CMem.rod_pos[1]:4}|'
-                #               f'{self.CMem.rod_pos[2]:4}|'
-                #               f'{self.CMem.rod_pos[3]:4}]')
+                if self.ENVStep % 2 == 0: # 매 3 ENVStep * tick 마다 제어봉 증가
+                    self._send_control_save(ActOrderBook['RodOut'])
+                    a_log_f(s=f'[{"NoRodOut":10}] '
+                              f'Rod Out ['
+                              f'{self.CMem.rod_pos[0]:4}|'
+                              f'{self.CMem.rod_pos[1]:4}|'
+                              f'{self.CMem.rod_pos[2]:4}|'
+                              f'{self.CMem.rod_pos[3]:4}]')
 
                 # 1-2] 제어봉 인출에 따른 출력 증가를 보론 주입을 통해 감쇄
                 # Boron Valve ------------------------------------------------------------------------------------------
@@ -482,29 +488,31 @@ class ENVCNS(CNS):
                     # Inject
                     self._send_control_save(ActOrderBook['BoronValveOpen'])
                     a_log_f(s=f'[{"NoRodOut":10}] BoronValveOpen')
+                    AMod[0] = - 0.5
                 else:
                     # Stay
                     a_log_f(s=f'[{"NoRodOut":10}] BoronValveStay')
+                    AMod[0] = 0.5
                 # 제어봉 제어
-                if AMod[1] < 0:
-                    # Inject
-                    self._send_control_save(ActOrderBook['RodOut'])
-                else:
-                    # Stay
-                    pass
-                a_log_f(s=f'[{"NoRodOut":10}] '
-                          f'Rod Out ['
-                          f'{self.CMem.rod_pos[0]:4}|'
-                          f'{self.CMem.rod_pos[1]:4}|'
-                          f'{self.CMem.rod_pos[2]:4}|'
-                          f'{self.CMem.rod_pos[3]:4}]')
+                # if AMod[1] < 0:
+                #     # Inject
+                #     self._send_control_save(ActOrderBook['RodOut'])
+                # else:
+                #     # Stay
+                #     pass
+                # a_log_f(s=f'[{"NoRodOut":10}] '
+                #           f'Rod Out ['
+                #           f'{self.CMem.rod_pos[0]:4}|'
+                #           f'{self.CMem.rod_pos[1]:4}|'
+                #           f'{self.CMem.rod_pos[2]:4}|'
+                #           f'{self.CMem.rod_pos[3]:4}]')
         # Action Logger Save -------------------------------------------------------------------------------------------
         with open(f'./{self.ActLoggerPath}/Act_{self.Name}.txt', 'a') as f:
             # Action log
             f.write(f'{self.a_log}')
         # Done Act -----------------------------------------------------------------------------------------------------
         self._send_control_to_cns()
-        return AMod
+        return np.array(AMod)
 
     # ENV Main TOOLs ===================================================================================================
     def step(self, A):
@@ -518,7 +526,7 @@ class ENVCNS(CNS):
         AMod = self.send_act(A)                                             # [a(t)]
         self.Loger_txt += f'A|{A}|AMod|{AMod}'                              #
 
-        self.want_tick = int(295)
+        self.want_tick = int(195)
 
         # New Data (time t+1) -------------------------------------
         super(ENVCNS, self).step()                  # 전체 CNS mem run-Freeze 하고 mem 업데이트

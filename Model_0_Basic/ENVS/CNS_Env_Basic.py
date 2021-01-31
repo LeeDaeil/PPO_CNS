@@ -117,7 +117,7 @@ class ENVCNS(CNS):
         :param A: A 액션 [0, 0, 0] <- act space에 따라서
         :return: AMod: 수정된 액션
         """
-        AMod = A
+        AMod = list(A)
         ActOrderBook = {
             'ChargingValveOpen': (['KSWO101', 'KSWO102'], [0, 1]),
         }
@@ -127,7 +127,7 @@ class ENVCNS(CNS):
         # Done Act
 
         self._send_control_to_cns()
-        return AMod
+        return np.array(AMod)
 
     # ENV Main TOOLs ===================================================================================================
     def step(self, A):
